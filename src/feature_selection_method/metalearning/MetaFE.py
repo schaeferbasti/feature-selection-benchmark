@@ -20,7 +20,6 @@ import warnings
 warnings.filterwarnings('ignore')
 
 last_reset_time = Value(ctypes.c_double, time.time())
-
 merge_keys = ["dataset - id", "feature - name", "operator", "model", "improvement"]
 
 def safe_merge(left, right):
@@ -88,10 +87,8 @@ def create_empty_core_matrix_for_dataset(X_train, model, dataset_id) -> pd.DataF
 def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, category_to_drop, wanted_min_relative_improvement, dataset_id):
     result_matrix = pd.read_parquet("Pandas_Matrix_Complete.parquet")
     datasets = pd.unique(result_matrix["dataset - id"]).tolist()
-
     if dataset_id in datasets:
         result_matrix = result_matrix[result_matrix["dataset - id"] != dataset_id]
-
     comparison_result_matrix = create_empty_core_matrix_for_dataset(X, model, dataset_id)
     comparison_result_matrix = add_pandas_metadata_columns(dataset_metadata, X, comparison_result_matrix)
     # Predict and split again
@@ -104,7 +101,7 @@ def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, ca
         except KeyError:
             print("")
         data = concat_data(X, y, X_test, y_test, "target")
-        data.to_parquet("MetaFE_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
         return X, y
     else:
         try:
@@ -122,11 +119,8 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
     y_result = result_matrix["improvement"]
     result_matrix = result_matrix.drop("improvement", axis=1)
     comparison_result_matrix = comparison_result_matrix.drop("improvement", axis=1)
-    # clf = RealMLPModel()
-    # clf = TabDPTModel()
     clf = CatBoostModel()
     clf.fit(X=result_matrix, y=y_result)
-
     # Predict and score
     comparison_result_matrix.columns = comparison_result_matrix.columns.astype(str)
     comparison_result_matrix = comparison_result_matrix[result_matrix.columns]
@@ -148,7 +142,7 @@ def process_method(dataset_id, model, wanted_min_relative_improvement):
     X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
     X_train, y_train = recursive_feature_addition(X_train, y_train, X_test, y_test, model, dataset_metadata, None, wanted_min_relative_improvement, dataset_id)
     data = concat_data(X_train, y_train, X_test, y_test, "target")
-    data.to_parquet("MetaFE_" + str(dataset_id) + ".parquet")
+    data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
 
 
 def run_process_method(dataset_id, model, improvement):
@@ -158,8 +152,6 @@ def run_process_method(dataset_id, model, improvement):
 def main(dataset_id, wanted_min_relative_improvement, memory_limit_mb, time_limit_seconds):
     print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
     model = "LightGBM_BAG_L1"
-    # process_func = lambda: process_method(dataset_id, model, wanted_min_relative_improvement)
-    # exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
     process_func = partial(run_process_method, dataset_id, model, wanted_min_relative_improvement)
     exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
     if exit_code != 0:
@@ -170,7 +162,6 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
     process = multiprocessing.Process(target=target_func)
     process.start()
     pid = process.pid
-
     while process.is_alive():
         try:
             mem = psutil.Process(pid).memory_info().rss / (1024 * 1024)  # MB
@@ -179,25 +170,22 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
                 print(f"[Monitor] Memory exceeded: {mem:.2f} MB > {mem_limit_mb} MB. Terminating.")
                 process.terminate()
                 break
-
             if elapsed_time > time_limit_sec:
                 print(f"[Monitor] Time limit exceeded: {elapsed_time:.1f} sec > {time_limit_sec} sec. Terminating.")
                 process.terminate()
                 break
-
         except psutil.NoSuchProcess:
             break
         time.sleep(check_interval)
-
     process.join()
     return process.exitcode
 
 
 def main_wrapper():
-    dataset = 2073
+    dataset = 146820
     wanted_min_relative_improvement = 0.1
     memory_limit_mb = 64000
-    time_limit_seconds = 7200
+    time_limit_seconds = 1000
     main(int(dataset), wanted_min_relative_improvement, memory_limit_mb, time_limit_seconds)
 
 
