@@ -8,9 +8,6 @@ import numpy as np
 import tensorflow as tf
 from tabpfn import TabPFNClassifier
 
-from src.Metadata.d2v.dataset2vec.dummdataset import Dataset
-from src.Metadata.d2v.dataset2vec.modules import FunctionF, PoolF, FunctionG, PoolG, FunctionH
-from src.Metadata.d2v.dataset2vec.sampling import Batch, TestSampling
 from src.utils.get_data import get_name_and_split_and_save_dataset
 
 
@@ -93,6 +90,7 @@ def get_tabpfn_embedding(X, y):
     return embeddings
 
 
+"""
 def get_d2v_metafeatures(dataset_id):
     tf.random.set_seed(0)
     np.random.seed(42)
@@ -177,4 +175,4 @@ def get_d2v_metafeatures(dataset_id):
 
     metafeatures = pd.DataFrame(np.vstack(datasetmf).mean(axis=0)[None], index=[args.file])
     return metafeatures
-
+"""
