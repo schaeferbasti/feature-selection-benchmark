@@ -155,6 +155,64 @@ def add_pandas_metadata_columns(dataset_metadata, X_train, result_matrix):
     return result_matrix
 
 
+def add_pandas_metadata_selection_columns(dataset_metadata, X_train, result_matrix):
+    columns = get_additional_pandas_columns()
+    new_columns = pd.DataFrame(index=result_matrix.index, columns=columns)
+    operators = ["without"]
+    for row in result_matrix.iterrows():
+        dataset = row[1][0]
+        featurename = row[1][1]
+        operator_count = get_operator_count(featurename, operators)
+        X_train_copy = X_train.copy()
+        feature_to_delete = featurename.split(" - ")[1]
+        X_train_copy = X_train_copy.drop(feature_to_delete, axis=1)
+        try:
+            feature = pd.DataFrame(X_train_copy[featurename])
+            feature_metadata = get_pandas_metafeatures(feature, featurename)
+            new_row = pd.DataFrame(columns=columns)
+            new_row.loc[len(result_matrix)] = [
+                dataset_metadata["task_type"],
+                feature_metadata["feature - count"],
+                feature_metadata["feature - unique"],
+                feature_metadata["feature - top"],
+                feature_metadata["feature - freq"],
+                feature_metadata["feature - mean"],
+                feature_metadata["feature - std"],
+                feature_metadata["feature - min"],
+                feature_metadata["feature - 25"],
+                feature_metadata["feature - 50"],
+                feature_metadata["feature - 75"],
+                feature_metadata["feature - max"],
+            ]
+            matching_indices = result_matrix[result_matrix["feature - name"] == str(featurename)].index
+            for idx in matching_indices:
+                new_columns.loc[idx] = new_row.iloc[0]
+        except KeyError:
+            feature = pd.DataFrame(X_train[feature_to_delete])
+            feature_metadata = get_pandas_metafeatures(feature, feature_to_delete)
+            new_row = pd.DataFrame(columns=columns)
+            new_row.loc[len(result_matrix)] = [
+                dataset_metadata["task_type"],
+                feature_metadata["feature - count"],
+                feature_metadata["feature - unique"],
+                feature_metadata["feature - top"],
+                feature_metadata["feature - freq"],
+                feature_metadata["feature - mean"],
+                feature_metadata["feature - std"],
+                feature_metadata["feature - min"],
+                feature_metadata["feature - 25"],
+                feature_metadata["feature - 50"],
+                feature_metadata["feature - 75"],
+                feature_metadata["feature - max"],
+            ]
+            matching_indices = result_matrix[result_matrix["feature - name"] == str(featurename)].index
+            for idx in matching_indices:
+                new_columns.loc[idx] = new_row.iloc[0]
+    insert_position = result_matrix.shape[1] - 2
+    result_matrix = pd.concat([result_matrix.iloc[:, :insert_position], new_columns, result_matrix.iloc[:, insert_position:]], axis=1)
+    return result_matrix
+
+
 def main():
     result_matrix = pd.read_parquet("src/Metadata/core/Core_Matrix_Complete.parquet")
     columns = get_additional_pandas_columns()
