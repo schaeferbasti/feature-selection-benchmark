@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import openml
 from openfe import OpenFE, transform
+from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 
 
@@ -163,3 +164,24 @@ def get_folds_and_validation_folds(len):
         row = pd.DataFrame([np.random.choice([1, 0], size=4)])
         validation_folds = pd.concat([validation_folds, row], ignore_index=True)
     return folds, validation_folds
+
+
+def preprocess_data(train_x, test_x) -> (pd.DataFrame, pd.DataFrame):
+    cols = train_x.columns
+    cat_columns = train_x.select_dtypes(['category']).columns
+    obj_columns = train_x.select_dtypes(['object']).columns
+    train_x[cat_columns] = train_x[cat_columns].apply(lambda x: pd.factorize(x, use_na_sentinel=True)[0])
+    test_x[cat_columns] = test_x[cat_columns].apply(lambda x: pd.factorize(x, use_na_sentinel=True)[0])
+    train_x[obj_columns] = train_x[obj_columns].apply(lambda x: pd.factorize(x, use_na_sentinel=True)[0])
+    test_x[obj_columns] = test_x[obj_columns].apply(lambda x: pd.factorize(x, use_na_sentinel=True)[0])
+    imp_nan = SimpleImputer(missing_values=np.nan, strategy='mean')
+    train_x = imp_nan.fit_transform(train_x)
+    test_x = imp_nan.transform(test_x)
+    imp_m1 = SimpleImputer(missing_values=-1, strategy='mean')
+    train_x = imp_m1.fit_transform(train_x)
+    test_x = imp_m1.transform(test_x)
+    train_x = pd.DataFrame(train_x).fillna(0)
+    test_x = pd.DataFrame(test_x).fillna(0)
+    train_x.columns = cols
+    test_x.columns = cols
+    return train_x, test_x
