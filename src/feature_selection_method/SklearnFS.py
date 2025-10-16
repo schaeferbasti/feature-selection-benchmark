@@ -12,7 +12,6 @@ from sklearn.feature_selection import SelectKBest, SelectFromModel, VarianceThre
     SequentialFeatureSelector
 from sklearn.feature_selection import f_classif, mutual_info_classif, chi2
 from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
-from sklearn.neighbors import NearestNeighbors
 from sklearn.svm import LinearSVC
 
 from src.utils.get_data import concat_data, get_openml_dataset_split_and_metadata
