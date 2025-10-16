@@ -115,8 +115,10 @@ def split_data(data, target_label) -> tuple[
 
 def concat_data(X_train, y_train, X_test, y_test, target_label):
     y_train = y_train.to_frame(target_label)
+    X_train.index = y_train.index
     train_data = pd.concat([X_train, y_train], axis=1)
     y_test = y_test.to_frame(target_label)
+    X_test.index = y_test.index
     test_data = pd.concat([X_test, y_test], axis=1)
     data = pd.concat([train_data, test_data], axis=0)
     return data
