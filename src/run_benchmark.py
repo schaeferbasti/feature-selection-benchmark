@@ -48,32 +48,29 @@ def main():
 
         # === METHOD RESULTS ===
         for data_file in files:
-            if "OpenFE" in data_file:
-                print("Skip")
-            else:
-                print(f"  Processing file: {data_file}")
-                name = data_file.split('.')[0]
-                method_and_dataset = name.split('/')[-1]
-                method_name = method_and_dataset.split('_')[0]
-                result_path = f"results/{method_and_dataset}.parquet"
+            print(f"  Processing file: {data_file}")
+            name = data_file.split('.')[0]
+            method_and_dataset = name.split('/')[-1]
+            method_name = method_and_dataset.split('_')[0]
+            result_path = f"results/{method_and_dataset}.parquet"
+            try:
+                results = pd.read_parquet(result_path)
+            except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
                 try:
-                    results = pd.read_parquet(result_path)
-                except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
-                    try:
-                        df = pd.read_parquet(data_file)
-                        Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label)
-                        if task_type == 'Supervised Classification':
-                            results = get_model_score_origin_classification(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name)
-                        else:
-                            results = get_model_score_origin_regression(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name)
-                        results = results[results['model'] == 'LightGBM_BAG_L1']
-                        results.to_parquet(result_path)
-                    except KeyError:
-                        print('No data file')
-                        continue
-                    combined_results.append(results)
-                else:
-                    combined_results.append(results)
+                    df = pd.read_parquet(data_file)
+                    Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label)
+                    if task_type == 'Supervised Classification':
+                        results = get_model_score_origin_classification(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name)
+                    else:
+                        results = get_model_score_origin_regression(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name)
+                    results = results[results['model'] == 'LightGBM_BAG_L1']
+                    results.to_parquet(result_path)
+                except KeyError:
+                    print('No data file')
+                    continue
+                combined_results.append(results)
+            else:
+                combined_results.append(results)
 
         all_results = pd.concat(combined_results, ignore_index=True).drop_duplicates()
         all_results.to_parquet(f'results/Result_{dataset_id}.parquet')
