@@ -25,7 +25,7 @@ def process_method(dataset_id):
     # Variance Threshold
     print("Filter Method: Variance Threshold, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SklearnVarianceThreshold_Ad" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/filter/SklearnVarianceThreshold_Ad" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -36,12 +36,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SklearnVarianceThreshold_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/filter/SklearnVarianceThreshold_" + str(dataset_id) + ".parquet")
 
     # SelectKBest - Classif_f
     print("Filter Method: SelectKBest, Score Function: Classif F, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -54,12 +54,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
 
     # SelectKBest - Chi2
     print("Filter Method: SelectKBest, Score Function: Chi2, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -72,12 +72,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
 
     # SelectPercentile - Mutual_info_classif
     print("Filter Method: SelectPercentile, Score Function: Mutual Info Classifier, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -90,12 +90,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
 
     # RFECV
     print("Filter Method: Recursive Feature Elimination with CV, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -108,12 +108,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
 
     # Select From Model (Linear SVC)
     print("Filter Method: Linear SVC, Penalty: L1, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -125,12 +125,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
 
     # Select From Model (Extra Trees Classifier)
     print("Filter Method: ExtraTreeClassifier, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/wrapper/SklearnExtraTreeClassifier_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../data/wrapper/SklearnExtraTreeClassifier_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -143,7 +143,7 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/wrapper/SklearnExtraTreeClassifier_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../data/wrapper/SklearnExtraTreeClassifier_" + str(dataset_id) + ".parquet")
 
 
 def run_process_method(dataset_id):
