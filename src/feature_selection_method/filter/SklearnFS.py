@@ -8,8 +8,8 @@ import ctypes
 
 import pandas as pd
 
-from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel, VarianceThreshold, SelectPercentile, \
-    mutual_info_classif, chi2
+from sklearn.feature_selection import SelectKBest, SelectFromModel, VarianceThreshold, SelectPercentile
+from sklearn.feature_selection import f_classif, mutual_info_classif, chi2
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.svm import LinearSVC
 
