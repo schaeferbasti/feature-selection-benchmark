@@ -8,7 +8,7 @@ import ctypes
 
 import pandas as pd
 
-from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel, VarianceThreshold
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.svm import LinearSVC
 
@@ -20,8 +20,19 @@ def process_method(dataset_id):
     last_reset_time.value = time.time()
     X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
 
-    # SelectKBest
 
+    # Variance Treshold
+    variance_threshold = VarianceThreshold(threshold=(.8 * (1 - .8)))
+    X_train_new = variance_threshold.fit_transform(X_train)
+    X_test_new = variance_threshold.transform(X_test)
+    selected_features = X_train.columns[variance_threshold.get_support()]
+    X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
+    X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
+    data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
+    data.to_parquet("../../data/filter/SklearnVarianceThreshold_" + str(dataset_id) + ".parquet")
+
+
+    # SelectKBest
     print("Filter Method: SelectKBest, Dataset: " + str(dataset_id))
     selectKBest = SelectKBest(f_classif, k=2)
     selectKBest.fit(X_train, y_train)
@@ -29,10 +40,11 @@ def process_method(dataset_id):
     X_test_new = selectKBest.transform(X_test)
     selected_features = X_train.columns[selectKBest.get_support()]
     # Transform the data and wrap it back into DataFrames
-    X_train_new = pd.DataFrame(selectKBest.transform(X_train), columns=selected_features, index=X_train.index)
-    X_test_new = pd.DataFrame(selectKBest.transform(X_test), columns=selected_features, index=X_test.index)
+    X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
+    X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
     data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
     data.to_parquet("../../data/filter/SelectKBest_" + str(dataset_id) + ".parquet")
+
 
     # Select From Model (Linear SVC)
     print("Filter Method: Linear SVC, Dataset: " + str(dataset_id))
@@ -45,6 +57,7 @@ def process_method(dataset_id):
     X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
     data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
     data.to_parquet("../../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
+
 
     # Select From Model (Extra Trees Classifier)
     print("Filter Method: ExtraTreeClassifier, Dataset: " + str(dataset_id))
