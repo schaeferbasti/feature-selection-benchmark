@@ -8,9 +8,10 @@ import ctypes
 
 import pandas as pd
 
-from sklearn.feature_selection import SelectKBest, SelectFromModel, VarianceThreshold, SelectPercentile
+from sklearn.feature_selection import SelectKBest, SelectFromModel, VarianceThreshold, SelectPercentile, RFECV
 from sklearn.feature_selection import f_classif, mutual_info_classif, chi2
-from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
+from sklearn.neighbors import NearestNeighbors
 from sklearn.svm import LinearSVC
 
 from src.utils.get_data import concat_data, get_openml_dataset_split_and_metadata
@@ -40,7 +41,7 @@ def process_method(dataset_id):
     # SelectKBest - Classif_f
     print("Filter Method: SelectKBest, Score Function: Classif F, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SelectKBestFClassif_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -53,12 +54,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SelectKBestFClassif_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../../data/filter/SklearnSelectKBestFClassif_" + str(dataset_id) + ".parquet")
 
     # SelectKBest - Chi2
     print("Filter Method: SelectKBest, Score Function: Chi2, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SelectKBestChi2_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -71,12 +72,12 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SelectKBestChi2_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../../data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")
 
     # SelectPercentile - Mutual_info_classif
     print("Filter Method: SelectPercentile, Score Function: Mutual Info Classifier, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("../../data/filter/SelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
+        data = pd.read_parquet("../../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
         print("File exists, next method" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection \n\n")
@@ -89,7 +90,25 @@ def process_method(dataset_id):
         X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("../../data/filter/SelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
+        data.to_parquet("../../data/filter/SklearnSelectPercentileMutualInfo_" + str(dataset_id) + ".parquet")
+
+    # RFECV
+    print("Filter Method: Recursive Feature Elimination with CV, Dataset: " + str(dataset_id))
+    try:
+        data = pd.read_parquet("../../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
+        print("File exists, next method" + str(data.head()) + "\n\n")
+    except FileNotFoundError:
+        print("Calculate Feature Selection \n\n")
+        rfecv = RFECV(estimator=RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1), step=1, min_features_to_select=1)
+        rfecv.fit(X_train, y_train)
+        X_train_new = rfecv.transform(X_train)
+        X_test_new = rfecv.transform(X_test)
+        selected_features = X_train.columns[rfecv.get_support()]
+        # Transform the data and wrap it back into DataFrames
+        X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
+        X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
+        data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
+        data.to_parquet("../../data/filter/SklearnRFECV_" + str(dataset_id) + ".parquet")
 
     # Select From Model (Linear SVC)
     print("Filter Method: Linear SVC, Penalty: L1, Dataset: " + str(dataset_id))
