@@ -8,7 +8,7 @@ import ctypes
 
 import pandas as pd
 
-from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import SelectKBest, f_classif, SelectFromModel
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.svm import LinearSVC
 
@@ -31,27 +31,33 @@ def process_method(dataset_id):
     # Transform the data and wrap it back into DataFrames
     X_train_new = pd.DataFrame(selectKBest.transform(X_train), columns=selected_features, index=X_train.index)
     X_test_new = pd.DataFrame(selectKBest.transform(X_test), columns=selected_features, index=X_test.index)
+    data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
+    data.to_parquet("../../data/filter/SelectKBest_" + str(dataset_id) + ".parquet")
+
     # Select From Model (Linear SVC)
-    """
     print("Filter Method: Linear SVC, Dataset: " + str(dataset_id))
     lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X_train, y_train)
-    model = fs.SelectFromModel(lsvc, prefit=True)
+    model = SelectFromModel(lsvc, prefit=True)
     X_train_new = model.transform(X_train)
     X_test_new = model.transform(X_test)
-    """
+    selected_features = X_train.columns[model.get_support()]
+    X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
+    X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
+    data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
+    data.to_parquet("../../data/wrapper/SklearnLinearSVC_" + str(dataset_id) + ".parquet")
 
     # Select From Model (Extra Trees Classifier)
-    """
     print("Filter Method: ExtraTreeClassifier, Dataset: " + str(dataset_id))
     clf = ExtraTreesClassifier(n_estimators=50)
     clf = clf.fit(X_train, y_train)
-    model = fs.SelectFromModel(clf, prefit=True)
+    model = SelectFromModel(clf, prefit=True)
     X_train_new = model.transform(X_train)
     X_test_new = model.transform(X_test)
-    """
-
+    selected_features = X_train.columns[model.get_support()]
+    X_train_new = pd.DataFrame(X_train_new, columns=selected_features, index=X_train.index)
+    X_test_new = pd.DataFrame(X_test_new, columns=selected_features, index=X_test.index)
     data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-    data.to_parquet("../../data/filter/Sklearn_" + str(dataset_id) + ".parquet")
+    data.to_parquet("../../data/wrapper/SklearnExtraTreeClassifier_" + str(dataset_id) + ".parquet")
 
 
 def run_process_method(dataset_id):
