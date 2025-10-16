@@ -39,16 +39,16 @@ from category_encoders import TargetEncoder, CatBoostEncoder, WOEEncoder, JamesS
 from category_encoders.glmm import GLMMEncoder
 from sklearn.preprocessing import LabelEncoder
 from category_encoders.wrapper import PolynomialWrapper
-from .encoders import FrequencyEncoder
-from .sulov_method import FE_remove_variables_using_SULOV_method
-from .classify_method import classify_columns, EDA_find_remove_columns_with_infinity
-from .ml_models import analyze_problem_type, get_sample_weight_array, check_if_GPU_exists
-from .my_encoders import Groupby_Aggregator, My_LabelEncoder_Pipe, My_LabelEncoder
-from .my_encoders import Rare_Class_Combiner, Rare_Class_Combiner_Pipe, FE_create_time_series_features
-from .my_encoders import Column_Names_Transformer
-from .auto_encoders import DenoisingAutoEncoder, VariationalAutoEncoder, GANAugmenter, GAN
-from .auto_encoders import dae_hyperparam_selection, vae_hyperparam_selection, CNNAutoEncoder
-from .stacking_models import get_class_distribution
+from src.feature_selection_method.wrapper.Featurewiz.method.encoders import FrequencyEncoder
+from src.feature_selection_method.wrapper.Featurewiz.method.sulov_method import FE_remove_variables_using_SULOV_method
+from src.feature_selection_method.wrapper.Featurewiz.method.classify_method import classify_columns, EDA_find_remove_columns_with_infinity
+from src.feature_selection_method.wrapper.Featurewiz.method.ml_models import analyze_problem_type, get_sample_weight_array, check_if_GPU_exists
+from src.feature_selection_method.wrapper.Featurewiz.method.my_encoders import Groupby_Aggregator, My_LabelEncoder_Pipe, My_LabelEncoder
+from src.feature_selection_method.wrapper.Featurewiz.method.my_encoders import Rare_Class_Combiner, Rare_Class_Combiner_Pipe, FE_create_time_series_features
+from src.feature_selection_method.wrapper.Featurewiz.method.my_encoders import Column_Names_Transformer
+from src.feature_selection_method.wrapper.Featurewiz.method.auto_encoders import DenoisingAutoEncoder, VariationalAutoEncoder, GANAugmenter, GAN
+from src.feature_selection_method.wrapper.Featurewiz.method.auto_encoders import dae_hyperparam_selection, vae_hyperparam_selection, CNNAutoEncoder
+from src.feature_selection_method.wrapper.Featurewiz.method.stacking_models import get_class_distribution
 
 from . import settings
 settings.init()
