@@ -1,13 +1,13 @@
 # https://github.com/fuyuanlyu/AutoFS-in-CTR/tree/main/LPFS
 import pickle
-import os
 import numpy as np
 import pandas as pd
 from causalnex.structure import DAGClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
-from src.feature_engineering.MACFE.method.transform import transform_unary, transform_binary, transform_scaler
+from src.feature_selection_method.wrapper.MACFE.method.transform import transform_unary, transform_binary, transform_scaler
+from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data
 
 
 def get_macfe_features(train_x, train_y, test_x, test_y, name) -> tuple[
@@ -133,7 +133,7 @@ def preprocess_dataset(df):
 
 
 def get_TRMs():
-    with open("src/feature_engineering/MACFE/data/TRM_set.pkl", 'rb') as f:
+    with open("data/TRM_set.pkl", 'rb') as f: # src/feature_selection_method/wrapper/MACFE/
         TRM_set = pickle.load(f)
     TRM_dataset = list()
     for i in range(len(TRM_set)):
@@ -141,7 +141,7 @@ def get_TRMs():
             np.append(TRM_set[i]['encoding'].ravel(), TRM_set[i]['top_t_index']))
     TRM_dataset = np.array(TRM_dataset)
 
-    with open('src/feature_engineering/MACFE/data/TRM_binary_set_maxf1f2.pkl', 'rb') as f:
+    with open('data/TRM_binary_set_maxf1f2.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
         TRM_binary_set = pickle.load(f)
     TRM_binary_dataset = list()
     for i in range(len(TRM_binary_set)):
@@ -149,7 +149,7 @@ def get_TRMs():
             np.append(TRM_binary_set[i]['encoding'].ravel(), TRM_binary_set[i]['top_t_index']))
     TRM_binary_dataset = np.array(TRM_binary_dataset)
 
-    with open('src/feature_engineering/MACFE/data/TRM_scaler_set.pkl', 'rb') as f:
+    with open('data/TRM_scaler_set.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
         TRM_scaler_set = pickle.load(f)
     TRM_scaler_dataset = list()
     for i in range(len(TRM_scaler_set)):
@@ -182,3 +182,18 @@ def _feature_construction_step(df, TRM_dataset, TRM_binary_dataset):
     df_e['class'] = y
 
     return df_e
+
+
+def main():
+    dataset_id = 146820
+    try:
+        pd.read_parquet("../../../data/wrapper/MACFE_" + str(dataset_id) + ".parquet")
+    except FileNotFoundError:
+        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, X_test = get_macfe_features(X_train, y_train, X_test, y_test, dataset_id)
+        data = concat_data(X_train, y_train, X_test, y_test, "target")
+        data.to_parquet("../../../data/wrapper/MACFE_" + str(dataset_id) + ".parquet")
+
+
+if __name__ == "__main__":
+    main()

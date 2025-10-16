@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler
-from src.feature_engineering.MACFE.method.metafeatures import get_metafeatures_dataset, get_histogram
-from src.feature_engineering.MACFE.method.unary_transformations import Transformations as Unary_transformations
-from src.feature_engineering.MACFE.method.binary_transformations import Transformations as Binary_transformations
+from src.feature_selection_method.wrapper.MACFE.method.metafeatures import get_metafeatures_dataset, get_histogram
+from src.feature_selection_method.wrapper.MACFE.method.unary_transformations import Transformations as Unary_transformations
+from src.feature_selection_method.wrapper.MACFE.method.binary_transformations import Transformations as Binary_transformations
 from sklearn.preprocessing import LabelEncoder
 from sklearn.neighbors import NearestNeighbors
 import pandas as pd
