@@ -140,9 +140,12 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
 def process_method(dataset_id, model, wanted_min_relative_improvement):
     last_reset_time.value = time.time()
     X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
-    X_train, y_train = recursive_feature_addition(X_train, y_train, X_test, y_test, model, dataset_metadata, None, wanted_min_relative_improvement, dataset_id)
-    data = concat_data(X_train, y_train, X_test, y_test, "target")
-    data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
+    try:
+        pd.read_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
+    except FileNotFoundError:
+        X_train, y_train = recursive_feature_addition(X_train, y_train, X_test, y_test, model, dataset_metadata, None, wanted_min_relative_improvement, dataset_id)
+        data = concat_data(X_train, y_train, X_test, y_test, "target")
+        data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
 
 
 def run_process_method(dataset_id, model, improvement):

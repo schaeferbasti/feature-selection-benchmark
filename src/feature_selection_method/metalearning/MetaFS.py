@@ -125,12 +125,15 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
 
 
 def run_process_method(dataset_id, model):
-    last_reset_time.value = time.time()
-    X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
-    X_train, y_train, X_test, y_test = recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset_metadata, None, dataset_id)
-    data = concat_data(X_train, y_train, X_test, y_test, "target")
-    data.to_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
-    print("Write File: data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+    try:
+        pd.read_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+    except FileNotFoundError:
+        last_reset_time.value = time.time()
+        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, y_train, X_test, y_test = recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset_metadata, None, dataset_id)
+        data = concat_data(X_train, y_train, X_test, y_test, "target")
+        data.to_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+        print("Write File: data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
 
 
 def main(dataset_id, memory_limit_mb, time_limit_seconds):
