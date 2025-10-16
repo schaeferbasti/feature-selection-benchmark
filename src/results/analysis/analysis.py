@@ -1,5 +1,4 @@
 import glob
-from typing import List, Tuple
 
 import numpy as np
 import openml
@@ -136,6 +135,7 @@ def make_latex_tables_split(df_pivot, without_openfe, columns_per_table=6):
         print("\n".join(latex_lines))
 
 
+"""
 def make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe, columns_per_table=5):
     from math import ceil
 
@@ -194,33 +194,37 @@ def make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe, columns_per
         latex_lines.append("")
 
         print("\n".join(latex_lines))
+"""
 
 
 def get_data(result_files):
     all_results = []
     for result_file in result_files:
         df = pd.read_parquet(result_file)
-        dataset_id = int(result_file.split("Result_")[1].split(".parquet")[0])
-        df["origin"] = df["origin"].apply(lambda x: "Best Random" if str(x).startswith("Random") else x)
+        dataset_id = int(result_file.split("../Result_")[1].split(".parquet")[0])
         all_results.append(df)
     df_all = pd.concat(all_results, ignore_index=True)
     # Convert score to error (you can adjust this as needed)
-    df_all["error_val"] = - df_all["score_val_mean"]
-    df_all["error_test"] = - df_all["score_test_mean"]
+    df_all["error_val"] = - df_all["score_val"]
+    df_all["error_test"] = - df_all["score_test"]
     # Pivot to have datasets on x, methods on lines
     df_all = df_all.drop_duplicates()
     df_pivot_val = df_all.pivot(index="dataset", columns="origin", values="error_val")
     df_pivot_val = df_pivot_val.sort_index()  # Sort by dataset ID
     df_pivot_val = make_model_name_nice(df_pivot_val)
+    """
     df_pivot_val_std = df_all.pivot(index="dataset", columns="origin", values="score_val_std")
     df_pivot_val_std = df_pivot_val_std.sort_index()  # Sort by dataset ID
     df_pivot_val_std = make_model_name_nice(df_pivot_val_std)
+    """
     df_pivot_test = df_all.pivot(index="dataset", columns="origin", values="error_test")
     df_pivot_test = df_pivot_test.sort_index()  # Sort by dataset ID
     df_pivot_test = make_model_name_nice(df_pivot_test)
+    """
     df_pivot_test_std = df_all.pivot(index="dataset", columns="origin", values="score_val_std")
     df_pivot_test_std = df_pivot_test_std.sort_index()  # Sort by dataset ID
     df_pivot_test_std = make_model_name_nice(df_pivot_test_std)
+    """
     datasets = df_pivot_val.index.astype(str)
     dataset_list = []
     for dataset in datasets.tolist():
@@ -235,7 +239,7 @@ def get_data(result_files):
         dataset_list.append(dataset)
     #dataset_list_wrapped = [insert_line_breaks(name, max_len=15) for name in dataset_list]
     dataset_list_wrapped = datasets.tolist()
-    return dataset_list_wrapped, df_pivot_val, df_pivot_val_std, df_pivot_test, df_pivot_test_std
+    return dataset_list_wrapped, df_pivot_val, None, df_pivot_test, None  # df_pivot_val_std, df_pivot_test_std
 
 
 def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
@@ -274,8 +278,8 @@ def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
         without_openfe = False
         column_to_move = df_pivot.pop("OpenFE")
         df_pivot.insert(len(df_pivot.columns), "OpenFE", column_to_move)
-        if score_type == "test":
-            make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe)
+        # if score_type == "test":
+            # make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe)
     if without_openfe:
         colors = cm.get_cmap('nipy_spectral')
         color_list: list[ndarray | tuple[float, float, float, float]] = [colors(i) for i in np.linspace(0, 0.95, len(df_pivot.columns))]
@@ -304,7 +308,7 @@ def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
     plt.yscale("log")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("../Result_Analysis/test_analysis/Graph_" + name + ".png")
+    plt.savefig("Graph_" + name + ".png")
     plt.show()
 
 
@@ -323,7 +327,7 @@ def plot_count_best(df_pivot_val, df_pivot_test, name):
     plt.xticks(rotation=90, ha="right")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("../Result_Analysis/test_analysis/Count_Best_" + name + "bar.png")
+    plt.savefig("Count_Best_" + name + "bar.png")
     plt.show()
 
 
@@ -387,7 +391,7 @@ def plot_avg_percentage_impr(baseline_col, df_pivot, df_pivot_std, name, only_pa
     plt.xticks(rotation=90, ha="right")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig("../Result_Analysis/test_analysis/Average_Percentage_Improvement_" + name + ".png")
+    plt.savefig("Average_Percentage_Improvement_" + name + ".png")
     plt.show()
 
 
@@ -448,7 +452,7 @@ def plot_boxplot_percentage_impr(baseline_col, df_pivot, name):
     plt.ylabel("Percentage error reduction of the " + score_type + " error\nin relation to the " + score_type + " error on the original datasets")
     plt.xticks(rotation=90, ha="right")
     plt.tight_layout()
-    plt.savefig(f"../Result_Analysis/test_analysis/Boxplot_Percentage_Improvement_{name}.png")
+    plt.savefig(f"Boxplot_Percentage_Improvement_{name}.png")
     plt.show()
 
 
@@ -527,13 +531,13 @@ def plot_pareto_front():
     plt.grid(True)
     plt.tight_layout()
     plt.legend()
-    plt.savefig(f"../Result_Analysis/test_analysis/Pareto_pandas_openfe.png")
+    plt.savefig(f"Pareto_pandas_openfe.png")
     plt.show()
 
 
 def analysis():
     baseline_col = "Original"
-    result_files = glob.glob("results/Result_*.parquet")
+    result_files = glob.glob("../Result_*.parquet")
     result_files = [f for f in result_files]
     dataset_list_wrapped, df_pivot_val, df_pivot_val_std, df_pivot_test, df_pivot_test_std = get_data(result_files)
     try:
@@ -545,8 +549,6 @@ def analysis():
         print("")
 
     # Plot
-    plot_pareto_front()
-    
     plot_score_graph(dataset_list_wrapped, df_pivot_val, df_pivot_val_std, "Val")
     plot_score_graph(dataset_list_wrapped, df_pivot_test, df_pivot_test_std, "Test")
 
@@ -572,6 +574,7 @@ def analysis():
     plot_boxplot_percentage_impr(baseline_col, df_pivot_val_without_OpenFE, "Val_without_OpenFE")
     plot_boxplot_percentage_impr(baseline_col, df_pivot_test_without_OpenFE, "Test_without_OpenFE")
 
+    """
     # Drop everything but pandas & original columns to compare SM approaches
     df_pivot_val_pandas = df_pivot_val[["Pandas, one-shot SM", "Pandas, recursive SM", "Original"]]
     df_pivot_test_pandas = df_pivot_test[["Pandas, one-shot SM", "Pandas, recursive SM", "Original"]]
@@ -610,7 +613,7 @@ def analysis():
     plot_count_best(df_pivot_val_openfe, df_pivot_test_openfe, "openfe_pandas_")
     plot_score_graph(dataset_list_wrapped, df_pivot_val_openfe, df_pivot_val_openfe_std, "Val_openfe_pandas")
     plot_score_graph(dataset_list_wrapped, df_pivot_test_openfe, df_pivot_test_openfe_std, "Test_openfe_pandas")
-
+    """
 
 if __name__ == "__main__":
     analysis()
