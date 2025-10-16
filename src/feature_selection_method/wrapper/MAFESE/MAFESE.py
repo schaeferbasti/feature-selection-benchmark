@@ -4,12 +4,11 @@ import numpy as np
 import pandas as pd
 from mafese import Data
 from mafese import UnsupervisedSelector
-from mafese import get_dataset
 
-from src.datasets.Datasets import preprocess_data
+from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data, preprocess_data
 
 
-def get_mafese_features(train_x, train_y, test_x, test_y, name, num_features) -> tuple[
+def get_mafese_features(train_x, train_y, test_x, test_y, name) -> tuple[
     pd.DataFrame,
     pd.DataFrame
 ]:
@@ -54,3 +53,18 @@ def get_mafese_features(train_x, train_y, test_x, test_y, name, num_features) ->
     train_x = pd.DataFrame(X_train_selected)
     test_x = pd.DataFrame(X_test_selected)
     return train_x, test_x
+
+
+def main():
+    dataset_id = 146820
+    try:
+        pd.read_parquet("../../../data/wrapper/MAFESE_" + str(dataset_id) + ".parquet")
+    except FileNotFoundError:
+        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, X_test = get_mafese_features(X_train, y_train, X_test, y_test, str(dataset_id))
+        data = concat_data(X_train, y_train, X_test, y_test, "target")
+        data.to_parquet("../../../data/wrapper/MAFESE_" + str(dataset_id) + ".parquet")
+
+
+if __name__ == "__main__":
+    main()
