@@ -3,19 +3,13 @@ import importlib
 
 import pandas as pd
 
-from src.results.analysis.analysis import analysis
-from src.run_benchmark import run_benchmark
-
 def run_methods(dataset_ids):
     methods = glob.glob("feature_selection_method/*/*/*.py")
     for method in methods:
         if any(skip in method for skip in ["Add_Pandas_Metafeatures.py", "MUFS.py", "Metrics.py", "MAFESE.py"]):
             continue
-        print(method)
-
         method_name = method.split("/")[-1].split(".")[0]
         path_name = method.split('method/')[-1].replace(str("/" + method_name + ".py"), '')
-        print("Path: " + path_name)
         print("Method: " + method_name)
         module_path = f"src.feature_selection_method.{path_name.replace('/', '.')}.{method_name}"
 
@@ -26,12 +20,8 @@ def run_methods(dataset_ids):
                 print(f"✅ File exists for {method_name}, dataset {dataset_id}")
             except FileNotFoundError:
                 print(f"⚠️ File missing for dataset {dataset_id} — generating with {method_name}.main()")
-                print(output_path)
                 module = importlib.import_module(module_path)
-                if hasattr(module, "main"):
-                    module.main(dataset_id)
-                else:
-                    print(f"❌ No main() found in {module_path}")
+                module.main(dataset_id)
 
 
 if __name__ == "__main__":
