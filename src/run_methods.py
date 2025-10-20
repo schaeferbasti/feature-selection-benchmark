@@ -32,3 +32,8 @@ def run_methods(dataset_ids):
                     module.main(dataset_id)
                 else:
                     print(f"❌ No main() found in {module_path}")
+
+
+if __name__ == "__main__":
+    dataset_ids = [146818]
+    run_methods(dataset_ids)

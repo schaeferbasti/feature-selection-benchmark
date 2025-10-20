@@ -3,8 +3,7 @@ from src.run_benchmark import run_benchmark
 from src.run_methods import run_methods
 
 
-def run_everything():
-    dataset_ids = [146818, 146820]
+def run_everything(dataset_ids):
     # Run all Methods
     run_methods(dataset_ids)
     # Run Benchmark
@@ -14,4 +13,5 @@ def run_everything():
 
 
 if __name__ == "__main__":
-    run_everything()
+    dataset_ids = [146818, 146820]
+    run_everything(dataset_ids)
