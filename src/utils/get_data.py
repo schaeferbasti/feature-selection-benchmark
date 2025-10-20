@@ -1,8 +1,10 @@
+import datetime
 import os
 
 import numpy as np
 import pandas as pd
 import openml
+import sklearn
 from openfe import OpenFE, transform
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
@@ -187,3 +189,51 @@ def preprocess_data(train_x, test_x) -> (pd.DataFrame, pd.DataFrame):
     train_x.columns = cols
     test_x.columns = cols
     return train_x, test_x
+
+
+def get_dataset_split(dataset_id: int) -> tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+    dict
+]:
+    if dataset_id == 1:
+        data = pd.read_parquet("../data/original/1.parquet")
+        y = data["Event"]
+        X = data.drop(columns=["Event"])
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+        dataset_metadata = {"task_id": 1, "task_type": "Supervised Classification", "number_of_classes": 'N/A'}
+    elif dataset_id != 2:
+        data = pd.read_parquet("../data/original/2.parquet")
+        y = data["Event"]
+        X = data.drop(columns=["Event"])
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+        dataset_metadata = {"task_id": 2, "task_type": "Supervised Classification", "number_of_classes": 'N/A'}
+    else:
+        task = openml.tasks.get_task(
+            dataset_id,
+            download_splits=True,
+            download_data=True,
+            download_qualities=True,
+            download_features_meta_data=True,
+        )
+        dataset_metadata = {"task_id": task.task_id, "task_type": task.task_type, "number_of_classes": 'N/A'}
+        train_idx, test_idx = task.get_train_test_split_indices()
+        X, y = task.get_X_and_y(dataset_format="dataframe")  # type: ignore
+        X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
+        X_test, y_test = X.iloc[test_idx], y.iloc[test_idx]
+    return X_train, y_train, X_test, y_test, dataset_metadata
+
+
+def get_physics_data():
+    df = pd.read_excel('../data/original/matrice_cluster_usa_AS_PlusFronts.xlsx')
+    # Write the Parquet file
+    for col in df.columns:
+        if df[col].apply(lambda x: isinstance(x, datetime.time)).any():
+            df[col] = df[col].astype(str)
+    df.to_parquet('../data/original/2.parquet')
+
+
+if __name__ == '__main__':
+    get_physics_data()

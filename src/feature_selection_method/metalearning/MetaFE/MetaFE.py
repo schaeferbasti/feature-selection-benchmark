@@ -12,7 +12,7 @@ from autogluon.tabular.models import CatBoostModel
 
 from src.utils.create_feature_and_featurename import create_featurenames, extract_operation_and_original_features, \
     create_feature_and_featurename
-from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data
+from src.utils.get_data import get_dataset_split, concat_data
 from src.utils.get_matrix import get_matrix_core_columns
 from multiprocessing import Value
 import ctypes
@@ -148,7 +148,7 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
 
 def process_method(dataset_id, model, wanted_min_relative_improvement):
     last_reset_time.value = time.time()
-    X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
     try:
         pd.read_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")  # ../../
     except FileNotFoundError:

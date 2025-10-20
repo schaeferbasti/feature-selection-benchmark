@@ -11,7 +11,7 @@ from sklearn.metrics import f1_score, balanced_accuracy_score
 from sklearn.model_selection import StratifiedKFold, cross_val_score, KFold
 from sklearn.metrics import make_scorer
 
-from src.utils.get_data import concat_data, get_openml_dataset_split_and_metadata
+from src.utils.get_data import concat_data, get_dataset_split
 
 global global_train_y
 
@@ -129,7 +129,7 @@ def main(dataset_id):
     try:
         pd.read_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
         X_train, X_test = get_bioautoml_features(X_train, y_train, X_test, 50, True)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../

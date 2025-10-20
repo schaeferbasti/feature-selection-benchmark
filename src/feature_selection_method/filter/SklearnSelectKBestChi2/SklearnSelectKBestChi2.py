@@ -11,14 +11,14 @@ import pandas as pd
 from sklearn.feature_selection import SelectKBest
 from sklearn.feature_selection import chi2
 
-from src.utils.get_data import concat_data, get_openml_dataset_split_and_metadata
+from src.utils.get_data import concat_data, get_dataset_split
 
 last_reset_time = Value(ctypes.c_double, time.time())
 
 
 def process_method(dataset_id):
     last_reset_time.value = time.time()
-    X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
     # SelectKBest - Chi2
     print("Filter Method: SelectKBest, Score Function: Chi2, Dataset: " + str(dataset_id))
     try:

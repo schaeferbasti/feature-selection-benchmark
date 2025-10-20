@@ -10,7 +10,7 @@ import psutil
 from src.feature_selection_method.metalearning.MetaFS.Add_Pandas_Metafeatures import add_pandas_metadata_selection_columns
 from autogluon.tabular.models import CatBoostModel
 
-from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data
+from src.utils.get_data import get_dataset_split, concat_data
 from src.utils.get_matrix import get_matrix_core_columns
 from multiprocessing import Value
 import ctypes
@@ -129,7 +129,7 @@ def process_method(dataset_id, model):
         pd.read_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")  # ../../
     except FileNotFoundError:
         last_reset_time.value = time.time()
-        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
         X_train, y_train, X_test, y_test = recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset_metadata, None, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")  # ../../

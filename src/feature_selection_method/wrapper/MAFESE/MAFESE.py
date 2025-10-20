@@ -5,7 +5,7 @@ import pandas as pd
 from mafese import Data
 from mafese import UnsupervisedSelector
 
-from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data, preprocess_data
+from src.utils.get_data import get_dataset_split, concat_data, preprocess_data
 
 
 def get_mafese_features(train_x, train_y, test_x, test_y, name) -> tuple[
@@ -59,7 +59,7 @@ def main(dataset_id):
     try:
         pd.read_parquet("data/wrapper/MAFESE_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
         X_train, X_test = get_mafese_features(X_train, y_train, X_test, y_test, str(dataset_id))
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/MAFESE_" + str(dataset_id) + ".parquet")  # ../../../

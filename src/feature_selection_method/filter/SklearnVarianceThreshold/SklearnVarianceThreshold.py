@@ -10,14 +10,14 @@ import pandas as pd
 
 from sklearn.feature_selection import VarianceThreshold
 
-from src.utils.get_data import concat_data, get_openml_dataset_split_and_metadata
+from src.utils.get_data import concat_data, get_dataset_split
 
 last_reset_time = Value(ctypes.c_double, time.time())
 
 
 def process_method(dataset_id):
     last_reset_time.value = time.time()
-    X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
+    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
     # Variance Threshold
     print("Filter Method: Variance Threshold, Dataset: " + str(dataset_id))
     try:
