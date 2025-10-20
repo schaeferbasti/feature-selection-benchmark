@@ -125,16 +125,16 @@ def objective_rf(space, continuous):
     return {'loss': -metric, 'status': STATUS_OK}
 
 
-def main():
-    dataset_id = 146820
+def main(dataset_id):
     try:
-        pd.read_parquet("../../../data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")
+        pd.read_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
         X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
         X_train, X_test = get_bioautoml_features(X_train, y_train, X_test, 50, True)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../../data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../
 
 
 if __name__ == "__main__":
-    main()
+    dataset_id = 146818
+    main(dataset_id)

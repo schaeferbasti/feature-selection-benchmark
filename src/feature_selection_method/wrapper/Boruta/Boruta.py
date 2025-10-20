@@ -43,16 +43,16 @@ def get_boruta_features(train_x, train_y, test_x) -> tuple[
     return train_x_selected_df, test_x_selected_df
 
 
-def main():
-    dataset_id = 146820
+def main(dataset_id):
     try:
-        pd.read_parquet("../../../data/wrapper/Boruta_" + str(dataset_id) + ".parquet")
+        pd.read_parquet("data/wrapper/Boruta_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
         X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
         X_train, X_test = get_boruta_features(X_train, y_train, X_test)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../../data/wrapper/Boruta_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/wrapper/Boruta_" + str(dataset_id) + ".parquet")  # ../../../
 
 
 if __name__ == "__main__":
-    main()
+    dataset_id = 146820
+    main(dataset_id)

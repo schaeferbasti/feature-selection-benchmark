@@ -7,20 +7,23 @@ from functools import partial
 import pandas as pd
 import psutil
 
-from Add_Pandas_Metafeatures import add_pandas_metadata_columns
+from src.feature_selection_method.metalearning.MetaFE.Add_Pandas_Metafeatures import add_pandas_metadata_columns
 from autogluon.tabular.models import CatBoostModel
 
-from src.utils.create_feature_and_featurename import create_featurenames, extract_operation_and_original_features, create_feature_and_featurename
+from src.utils.create_feature_and_featurename import create_featurenames, extract_operation_and_original_features, \
+    create_feature_and_featurename
 from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data
 from src.utils.get_matrix import get_matrix_core_columns
 from multiprocessing import Value
 import ctypes
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 last_reset_time = Value(ctypes.c_double, time.time())
 merge_keys = ["dataset - id", "feature - name", "operator", "model", "improvement"]
+
 
 def safe_merge(left, right):
     return pd.merge(left, right, on=merge_keys, how="inner")
@@ -31,7 +34,8 @@ def get_additional_features(X, y, prediction_result):
     for additional_feature in additional_feature_list:
         operation, original_features = extract_operation_and_original_features(additional_feature)
         if len(original_features) == 2:
-            feature, featurename = create_feature_and_featurename(X[original_features[0]], X[original_features[1]], operation)
+            feature, featurename = create_feature_and_featurename(X[original_features[0]], X[original_features[1]],
+                                                                  operation)
         else:
             feature, featurename = create_feature_and_featurename(X[original_features[0]], None, operation)
         if feature is not None:
@@ -84,8 +88,9 @@ def create_empty_core_matrix_for_dataset(X_train, model, dataset_id) -> pd.DataF
     return comparison_result_matrix
 
 
-def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, category_to_drop, wanted_min_relative_improvement, dataset_id):
-    result_matrix = pd.read_parquet("Pandas_Matrix_Complete.parquet")
+def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, category_to_drop,
+                               wanted_min_relative_improvement, dataset_id):
+    result_matrix = pd.read_parquet("feature_selection_method/metalearning/MetaFE/Pandas_Matrix_Complete.parquet")
     datasets = pd.unique(result_matrix["dataset - id"]).tolist()
     if dataset_id in datasets:
         result_matrix = result_matrix[result_matrix["dataset - id"] != dataset_id]
@@ -101,7 +106,7 @@ def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, ca
         except KeyError:
             print("")
         data = concat_data(X, y, X_test, y_test, "target")
-        data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
         return X, y
     else:
         try:
@@ -111,8 +116,9 @@ def recursive_feature_addition(X, y, X_test, y_test, model, dataset_metadata, ca
         except KeyError:
             print("")
         data = concat_data(X_new, y_new, X_test, y_test, "target")
-        data.to_parquet("MetaFE_" + str(dataset_id) + ".parquet")
-        return recursive_feature_addition(X_new, y_new, X_test, y_test, model, dataset_metadata, category_to_drop, wanted_min_relative_improvement, dataset_id)
+        data.to_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
+        return recursive_feature_addition(X_new, y_new, X_test, y_test, model, dataset_metadata, category_to_drop,
+                                          wanted_min_relative_improvement, dataset_id)
 
 
 def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_train, wanted_min_relative_improvement):
@@ -126,13 +132,16 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
     comparison_result_matrix = comparison_result_matrix[result_matrix.columns]
     prediction = clf.predict(X=comparison_result_matrix)
     prediction_df = pd.DataFrame(prediction, columns=["predicted_improvement"])
-    prediction_concat_df = pd.concat([comparison_result_matrix[["dataset - id", "feature - name", "model"]], prediction_df], axis=1)
+    prediction_concat_df = pd.concat(
+        [comparison_result_matrix[["dataset - id", "feature - name", "model"]], prediction_df], axis=1)
     best_operation = prediction_concat_df.nlargest(n=1, columns="predicted_improvement", keep="first")
     if best_operation["predicted_improvement"].values[0] < wanted_min_relative_improvement:
-        print("Predicted improvement of best operation: " + str(best_operation["predicted_improvement"].values[0]) + " - not good enough")
+        print("Predicted improvement of best operation: " + str(
+            best_operation["predicted_improvement"].values[0]) + " - not good enough")
         return X_train, y_train
     else:
-        print("Predicted improvement of best operation: " + str(best_operation["predicted_improvement"].values[0]) + " - execute feature engineering")
+        print("Predicted improvement of best operation: " + str(
+            best_operation["predicted_improvement"].values[0]) + " - execute feature engineering")
         X, y, _, _ = execute_feature_engineering_recursive(best_operation, X_train, y_train)
     return X, y
 
@@ -141,24 +150,12 @@ def process_method(dataset_id, model, wanted_min_relative_improvement):
     last_reset_time.value = time.time()
     X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
     try:
-        pd.read_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
+        pd.read_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")  # ../../
     except FileNotFoundError:
-        X_train, y_train = recursive_feature_addition(X_train, y_train, X_test, y_test, model, dataset_metadata, None, wanted_min_relative_improvement, dataset_id)
+        X_train, y_train = recursive_feature_addition(X_train, y_train, X_test, y_test, model, dataset_metadata, None,
+                                                      wanted_min_relative_improvement, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")
-
-
-def run_process_method(dataset_id, model, improvement):
-    process_method(dataset_id, model, improvement)
-
-
-def main(dataset_id, wanted_min_relative_improvement, memory_limit_mb, time_limit_seconds):
-    print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
-    model = "LightGBM_BAG_L1"
-    process_func = partial(run_process_method, dataset_id, model, wanted_min_relative_improvement)
-    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
-    if exit_code != 0:
-        print(f"[Warning] Method failed or was terminated. Skipping.\n")
+        data.to_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")  # ../../
 
 
 def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_interval=5):
@@ -184,14 +181,19 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
     return process.exitcode
 
 
-def main_wrapper():
-    dataset = 146820
+def main(dataset_id):
     wanted_min_relative_improvement = 0.1
     memory_limit_mb = 64000
     time_limit_seconds = 1000
-    main(int(dataset), wanted_min_relative_improvement, memory_limit_mb, time_limit_seconds)
+    print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
+    model = "LightGBM_BAG_L1"
+    process_func = partial(process_method, dataset_id, model, wanted_min_relative_improvement)
+    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
+    if exit_code != 0:
+        print(f"[Warning] Method failed or was terminated. Skipping.\n")
 
 
 if __name__ == '__main__':
     last_reset_time = Value(ctypes.c_double, time.time())
-    main_wrapper()
+    dataset_id = 146818
+    main(dataset_id)

@@ -97,7 +97,7 @@ def process_method(dataset_id):
         print("File created" + str(data.head()) + "\n\n")
 
     # RFECV
-    print("Embedded Method: Recursive Feature Elimination, Dataset: " + str(dataset_id))
+    print("Embedded Method: Recursive Feature Elimination with CV, Dataset: " + str(dataset_id))
     try:
         data = pd.read_parquet("../data/embedded/SklearnRFE_" + str(dataset_id) + ".parquet")
         print("File exists" + str(data.head()) + "\n\n")
@@ -116,7 +116,7 @@ def process_method(dataset_id):
         print("File created" + str(data.head()) + "\n\n")
 
     # RFE
-    print("Embedded Method: Recursive Feature Elimination with CV, Dataset: " + str(dataset_id))
+    print("Embedded Method: Recursive Feature Elimination, Dataset: " + str(dataset_id))
     try:
         data = pd.read_parquet("../data/embedded/SklearnRFECV_" + str(dataset_id) + ".parquet")
         print("File exists" + str(data.head()) + "\n\n")
@@ -205,17 +205,6 @@ def process_method(dataset_id):
         print("File created" + str(data.head()) + "\n\n")
 
 
-def run_process_method(dataset_id):
-    process_method(dataset_id)
-
-
-def main(dataset_id, memory_limit_mb, time_limit_seconds):
-    process_func = partial(run_process_method, dataset_id)
-    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
-    if exit_code != 0:
-        print(f"[Warning] Method failed or was terminated. Skipping.\n")
-
-
 def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_interval=5):
     process = multiprocessing.Process(target=target_func)
     process.start()
@@ -239,13 +228,16 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
     return process.exitcode
 
 
-def main_wrapper():
-    dataset = 146820
+def main(dataset_id):
     memory_limit_mb = 64000
     time_limit_seconds = 1000
-    main(int(dataset), memory_limit_mb, time_limit_seconds)
+    process_func = partial(process_method, dataset_id)
+    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
+    if exit_code != 0:
+        print(f"[Warning] Method failed or was terminated. Skipping.\n")
 
 
 if __name__ == '__main__':
     last_reset_time = Value(ctypes.c_double, time.time())
-    main_wrapper()
+    dataset_id = 146820
+    main(dataset_id)

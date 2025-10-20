@@ -133,7 +133,7 @@ def preprocess_dataset(df):
 
 
 def get_TRMs():
-    with open("data/TRM_set.pkl", 'rb') as f: # src/feature_selection_method/wrapper/MACFE/
+    with open("feature_selection_method/wrapper/MACFE/data/TRM_set.pkl", 'rb') as f: # src/feature_selection_method/wrapper/MACFE/
         TRM_set = pickle.load(f)
     TRM_dataset = list()
     for i in range(len(TRM_set)):
@@ -141,7 +141,7 @@ def get_TRMs():
             np.append(TRM_set[i]['encoding'].ravel(), TRM_set[i]['top_t_index']))
     TRM_dataset = np.array(TRM_dataset)
 
-    with open('data/TRM_binary_set_maxf1f2.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
+    with open('feature_selection_method/wrapper/MACFE/data/TRM_binary_set_maxf1f2.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
         TRM_binary_set = pickle.load(f)
     TRM_binary_dataset = list()
     for i in range(len(TRM_binary_set)):
@@ -149,7 +149,7 @@ def get_TRMs():
             np.append(TRM_binary_set[i]['encoding'].ravel(), TRM_binary_set[i]['top_t_index']))
     TRM_binary_dataset = np.array(TRM_binary_dataset)
 
-    with open('data/TRM_scaler_set.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
+    with open('feature_selection_method/wrapper/MACFE/data/TRM_scaler_set.pkl', 'rb') as f:  # src/feature_selection_method/wrapper/MACFE/
         TRM_scaler_set = pickle.load(f)
     TRM_scaler_dataset = list()
     for i in range(len(TRM_scaler_set)):
@@ -184,16 +184,16 @@ def _feature_construction_step(df, TRM_dataset, TRM_binary_dataset):
     return df_e
 
 
-def main():
-    dataset_id = 146820
+def main(dataset_id):
     try:
-        pd.read_parquet("../../../data/wrapper/MACFE_" + str(dataset_id) + ".parquet")
+        pd.read_parquet("data/wrapper/MACFE_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
         X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
         X_train, X_test = get_macfe_features(X_train, y_train, X_test, y_test, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../../data/wrapper/MACFE_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/wrapper/MACFE_" + str(dataset_id) + ".parquet")  # ../../../
 
 
 if __name__ == "__main__":
-    main()
+    dataset_id = 146820
+    main(dataset_id)

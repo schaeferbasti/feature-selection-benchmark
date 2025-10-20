@@ -7,7 +7,7 @@ from functools import partial
 import pandas as pd
 import psutil
 
-from Add_Pandas_Metafeatures import add_pandas_metadata_selection_columns
+from src.feature_selection_method.metalearning.MetaFS.Add_Pandas_Metafeatures import add_pandas_metadata_selection_columns
 from autogluon.tabular.models import CatBoostModel
 
 from src.utils.get_data import get_openml_dataset_split_and_metadata, concat_data
@@ -67,7 +67,7 @@ def create_empty_core_matrix_for_dataset(X_train, model, dataset_id) -> pd.DataF
 
 
 def recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset_metadata, category_to_drop, dataset_id):
-    result_matrix = pd.read_parquet("Pandas_Matrix_Complete.parquet")
+    result_matrix = pd.read_parquet("feature_selection_method/metalearning/MetaFS/Pandas_Matrix_Complete.parquet")
     datasets = pd.unique(result_matrix["dataset - id"]).tolist()
     if dataset_id in datasets:
         result_matrix = result_matrix[result_matrix["dataset - id"] != dataset_id]
@@ -83,7 +83,7 @@ def recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset
         except KeyError:
             print("")
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
         print("Write File: data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
         return X_train_new, y_train_new, X_test_new, y_test_new
     else:
@@ -95,7 +95,7 @@ def recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset
             print("")
         print(X_train_new.columns)
         data = concat_data(X_train_new, y_train_new, X_test_new, y_test_new, "target")
-        data.to_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
         print("Write File: data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
         return recursive_feature_selection(X_train_new, y_train_new, X_test_new, y_test_new, model, dataset_metadata, category_to_drop, dataset_id)
 
@@ -124,25 +124,16 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
     return X_train, y_train, X_test, y_test
 
 
-def run_process_method(dataset_id, model):
+def process_method(dataset_id, model):
     try:
-        pd.read_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+        pd.read_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")  # ../../
     except FileNotFoundError:
         last_reset_time.value = time.time()
         X_train, y_train, X_test, y_test, dataset_metadata = get_openml_dataset_split_and_metadata(dataset_id)
         X_train, y_train, X_test, y_test = recursive_feature_selection(X_train, y_train, X_test, y_test, model, dataset_metadata, None, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
-        data.to_parquet("../../data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
+        data.to_parquet("data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")  # ../../
         print("Write File: data/metalearning/MetaFS_" + str(dataset_id) + ".parquet")
-
-
-def main(dataset_id, memory_limit_mb, time_limit_seconds):
-    print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
-    model = "LightGBM_BAG_L1"
-    process_func = partial(run_process_method, dataset_id, model)
-    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
-    if exit_code != 0:
-        print(f"[Warning] Method failed or was terminated. Skipping.\n")
 
 
 def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_interval=5):
@@ -168,14 +159,20 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
     return process.exitcode
 
 
-def main_wrapper():
-    dataset = 146820
+def main(dataset_id):
     wanted_max_relative_downgrade = 0.1
     memory_limit_mb = 64000
     time_limit_seconds = 1000
-    main(int(dataset), memory_limit_mb, time_limit_seconds)
+    print("MFE - Method: Pandas, Dataset: " + str(
+        dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
+    model = "LightGBM_BAG_L1"
+    process_func = partial(process_method, dataset_id, model)
+    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
+    if exit_code != 0:
+        print(f"[Warning] Method failed or was terminated. Skipping.\n")
 
 
 if __name__ == '__main__':
     last_reset_time = Value(ctypes.c_double, time.time())
-    main_wrapper()
+    dataset_id = 146818
+    main(dataset_id)

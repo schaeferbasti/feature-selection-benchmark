@@ -201,7 +201,7 @@ def get_data(result_files):
     all_results = []
     for result_file in result_files:
         df = pd.read_parquet(result_file)
-        dataset_id = int(result_file.split("../Result_")[1].split(".parquet")[0])
+        dataset_id = int(result_file.split("results/Result_")[1].split(".parquet")[0])
         all_results.append(df)
     df_all = pd.concat(all_results, ignore_index=True)
     # Convert score to error (you can adjust this as needed)
@@ -308,7 +308,7 @@ def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
     plt.yscale("log")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("Graph_" + name + ".png")
+    plt.savefig("results/analysis/Graph_" + name + ".png")
     plt.show()
 
 
@@ -327,7 +327,7 @@ def plot_count_best(df_pivot_val, df_pivot_test, name):
     plt.xticks(rotation=90, ha="right")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("Count_Best_" + name + "bar.png")
+    plt.savefig("results/analysis/Count_Best_" + name + "bar.png")
     plt.show()
 
 
@@ -391,7 +391,7 @@ def plot_avg_percentage_impr(baseline_col, df_pivot, df_pivot_std, name, only_pa
     plt.xticks(rotation=90, ha="right")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig("Average_Percentage_Improvement_" + name + ".png")
+    plt.savefig("results/analysis/Average_Percentage_Improvement_" + name + ".png")
     plt.show()
 
 
@@ -452,7 +452,7 @@ def plot_boxplot_percentage_impr(baseline_col, df_pivot, name):
     plt.ylabel("Percentage error reduction of the " + score_type + " error\nin relation to the " + score_type + " error on the original datasets")
     plt.xticks(rotation=90, ha="right")
     plt.tight_layout()
-    plt.savefig(f"Boxplot_Percentage_Improvement_{name}.png")
+    plt.savefig(f"results/analysis/Boxplot_Percentage_Improvement_{name}.png")
     plt.show()
 
 
@@ -531,13 +531,13 @@ def plot_pareto_front():
     plt.grid(True)
     plt.tight_layout()
     plt.legend()
-    plt.savefig(f"Pareto_pandas_openfe.png")
+    plt.savefig(f"results/analysis/Pareto_pandas_openfe.png")
     plt.show()
 
 
 def analysis():
     baseline_col = "Original"
-    result_files = glob.glob("../Result_*.parquet")
+    result_files = glob.glob("results/Result_*.parquet")
     result_files = [f for f in result_files]
     dataset_list_wrapped, df_pivot_val, df_pivot_val_std, df_pivot_test, df_pivot_test_std = get_data(result_files)
     try:
