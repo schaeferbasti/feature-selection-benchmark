@@ -1,0 +1,10 @@
+ *************************************************** 
+ Time per Method and Dataset 
+ *************************************************** 
+
+SklearnBackwardSFS - 167120: 1001.0205159187317
+SklearnBackwardSFS - 167210: 0.004559755325317383
+SklearnBackwardSFS - 168350: 0.003077983856201172
+SklearnBackwardSFS - 168757: 0.002894163131713867
+SklearnBackwardSFS - 168784: 0.002763032913208008
+SklearnBackwardSFS - 189354: 0.0028221607208251953
