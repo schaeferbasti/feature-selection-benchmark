@@ -4,10 +4,10 @@ import os
 import numpy as np
 import pandas as pd
 import openml
-import sklearn
 from openfe import OpenFE, transform
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 
 
 def get_all_amlb_dataset_ids():
@@ -199,17 +199,19 @@ def get_dataset_split(dataset_id: int) -> tuple[
     dict
 ]:
     if dataset_id == 1:
-        data = pd.read_parquet("../data/original/1.parquet")
+        data = pd.read_parquet("data/original/1.parquet")
         y = data["Event"]
         X = data.drop(columns=["Event"])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         dataset_metadata = {"task_id": 1, "task_type": "Supervised Classification", "number_of_classes": 'N/A'}
-    elif dataset_id != 2:
-        data = pd.read_parquet("../data/original/2.parquet")
+    elif dataset_id == 2:
+        data = pd.read_parquet("data/original/2.parquet")
+        data = data.dropna(subset=["Event"])
         y = data["Event"]
-        X = data.drop(columns=["Event"])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 42)
-        dataset_metadata = {"task_id": 2, "task_type": "Supervised Classification", "number_of_classes": 'N/A'}
+        print(y.value_counts(dropna=False))
+        X = data.drop(columns=["Event", "Sea breezes", "Fogs", "Storms", "Passage of Front"])
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        dataset_metadata = {"task_id": 2, "task_type": "Multiclass", "number_of_classes": 'N/A'}
     else:
         task = openml.tasks.get_task(
             dataset_id,
@@ -229,10 +231,15 @@ def get_dataset_split(dataset_id: int) -> tuple[
 def get_physics_data():
     df = pd.read_excel('../data/original/matrice_cluster_usa_AS_PlusFronts.xlsx')
     # Write the Parquet file
-    for col in df.columns:
-        if df[col].apply(lambda x: isinstance(x, datetime.time)).any():
-            df[col] = df[col].astype(str)
-    df.to_parquet('../data/original/2.parquet')
+    df['DateTime'] = pd.to_datetime(df['DateTime'], errors='coerce')  # converts string → datetime
+    df['hour'] = df['DateTime'].dt.hour
+    df['minute'] = df['DateTime'].dt.minute
+    df['day'] = df['DateTime'].dt.day
+    df['month'] = df['DateTime'].dt.month
+    df['year'] = df['DateTime'].dt.year
+    # then drop the original datetime columns
+    X = df.drop(columns=["DateTime", "hour UTC", "Dates"])
+    X.to_parquet('../data/original/2.parquet')
 
 
 if __name__ == '__main__':
