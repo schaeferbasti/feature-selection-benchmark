@@ -184,7 +184,7 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
 def main(dataset_id):
     wanted_min_relative_improvement = 0.1
     memory_limit_mb = 64000
-    time_limit_seconds = 1000
+    time_limit_seconds = 1800
     print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
     model = "LightGBM_BAG_L1"
     process_func = partial(process_method, dataset_id, model, wanted_min_relative_improvement)
