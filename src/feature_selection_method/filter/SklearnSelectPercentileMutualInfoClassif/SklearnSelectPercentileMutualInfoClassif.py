@@ -1,11 +1,3 @@
-import multiprocessing
-import time
-from functools import partial
-
-import psutil
-from multiprocessing import Value
-import ctypes
-
 import pandas as pd
 
 from sklearn.feature_selection import SelectPercentile
@@ -13,16 +5,14 @@ from sklearn.feature_selection import mutual_info_classif
 
 from src.utils.get_data import concat_data, get_dataset_split
 
-last_reset_time = Value(ctypes.c_double, time.time())
 
-
-def process_method(dataset_id):
-    last_reset_time.value = time.time()
+def main(dataset_id):
     X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
     # SelectPercentile - Mutual_info_classif
     print("Filter Method: SelectPercentile, Score Function: Mutual Info Classifier, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("data/filter/SklearnSelectPercentileMutualInfoClassif_" + str(dataset_id) + ".parquet")  # ../
+        data = pd.read_parquet(
+            "data/filter/SklearnSelectPercentileMutualInfoClassif_" + str(dataset_id) + ".parquet")  # ../
         print("File exists" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection")
@@ -39,39 +29,6 @@ def process_method(dataset_id):
         print("File created" + str(data.head()) + "\n\n")
 
 
-def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_interval=5):
-    process = multiprocessing.Process(target=target_func)
-    process.start()
-    pid = process.pid
-    while process.is_alive():
-        try:
-            mem = psutil.Process(pid).memory_info().rss / (1024 * 1024)  # MB
-            elapsed_time = time.time() - last_reset_time.value
-            if mem > mem_limit_mb:
-                print(f"[Monitor] Memory exceeded: {mem:.2f} MB > {mem_limit_mb} MB. Terminating.")
-                process.terminate()
-                break
-            if elapsed_time > time_limit_sec:
-                print(f"[Monitor] Time limit exceeded: {elapsed_time:.1f} sec > {time_limit_sec} sec. Terminating.")
-                process.terminate()
-                break
-        except psutil.NoSuchProcess:
-            break
-        time.sleep(check_interval)
-    process.join()
-    return process.exitcode
-
-
-def main(dataset_id):
-    memory_limit_mb = 64000
-    time_limit_seconds = 1000
-    process_func = partial(process_method, dataset_id)
-    exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
-    if exit_code != 0:
-        print(f"[Warning] Method failed or was terminated. Skipping.\n")
-
-
 if __name__ == '__main__':
-    last_reset_time = Value(ctypes.c_double, time.time())
     dataset_id = 146820
     main(dataset_id)
