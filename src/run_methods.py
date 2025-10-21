@@ -1,10 +1,13 @@
 import glob
 import importlib
+import time
 
 import pandas as pd
 
 def run_methods(dataset_ids):
     methods = glob.glob("feature_selection_method/*/*/*.py")
+    with open("results/times.txt", 'a') as f:
+        f.write(f" *************************************************** \n Time per Method and Dataset \n *************************************************** \n\n")
     for method in methods:
         if any(skip in method for skip in ["Add_Pandas_Metafeatures.py", "MUFS.py", "Metrics.py", "MAFESE.py"]):
             continue
@@ -21,7 +24,12 @@ def run_methods(dataset_ids):
             except FileNotFoundError:
                 print(f"⚠️ File missing for dataset {dataset_id} — generating with {method_name}.main()")
                 module = importlib.import_module(module_path)
+                start = time.time()
                 module.main(dataset_id)
+                end = time.time()
+                method_time = end - start
+                with open("results/times.txt", 'a') as f:
+                    f.write(f"{method_name} - {dataset_id}: {method_time}\n")
 
 
 if __name__ == "__main__":
