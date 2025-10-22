@@ -16,7 +16,12 @@ def main(dataset_id):
     except FileNotFoundError:
         print("Calculate Feature Selection")
         clf = ExtraTreesClassifier(n_estimators=50)
-        clf = clf.fit(X_train, y_train)
+        try:
+            clf = clf.fit(X_train, y_train)
+        except ValueError:
+            X_train.fillna(method="ffill", inplace=True)
+            X_test.fillna(method="ffill", inplace=True)
+            clf = clf.fit(X_train, y_train)
         model = SelectFromModel(clf, prefit=True)
         X_train_new = model.transform(X_train)
         X_test_new = model.transform(X_test)
