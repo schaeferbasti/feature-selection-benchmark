@@ -12,7 +12,7 @@ def main(dataset_id):
     # mRMR
     print("Filter Method: mRMR, Dataset: " + str(dataset_id))
     try:
-        data = pd.read_parquet("data/filter/SklearnSelectKBestChi2_" + str(dataset_id) + ".parquet")  # ../
+        data = pd.read_parquet("data/filter/mRMR_" + str(dataset_id) + ".parquet")  # ../
         print("File exists" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection")
@@ -21,7 +21,7 @@ def main(dataset_id):
         X_train_new = pd.DataFrame(X_train, columns=selected_features, index=X_train.index)
         X_test_new = pd.DataFrame(X_test, columns=selected_features, index=X_test.index)
         data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-        data.to_parquet("data/filter/mRMR" + str(dataset_id) + ".parquet")  # ../
+        data.to_parquet("data/filter/mRMR_" + str(dataset_id) + ".parquet")  # ../
         print("File created" + str(data.head()) + "\n\n")
 
 
