@@ -16,7 +16,7 @@ def run_methods(dataset_ids):
     with open("results/times.txt", 'a') as f:
         f.write(f" *************************************************** \n Time per Method and Dataset \n *************************************************** \n\n")
     for method in methods:
-        if any(skip in method for skip in ["Add_Pandas_Metafeatures.py", "MUFS.py", "Metrics.py", "MAFESE.py", "BioAutoML.py"]):
+        if any(skip in method for skip in ["Add_Pandas_Metafeatures.py", "MUFS.py", "Metrics.py", "MAFESE.py", "BioAutoML.py", "MACFE.py"]):
             continue
         method_name = method.split("/")[-1].split(".")[0]
         path_name = method.split('method/')[-1].replace(str("/" + method_name + ".py"), '')
@@ -35,6 +35,34 @@ def run_methods(dataset_ids):
             elif method_name == "SklearnExtraTreesClassifier" and dataset_id == 168757:
                 continue
             elif method_name == "SklearnExtraTreesClassifier" and dataset_id == 189354:
+                continue
+            elif method_name == "SklearnForwardSFS" and dataset_id == 167210:
+                continue
+            elif method_name == "SklearnForwardSFS" and dataset_id == 168757:
+                continue
+            elif method_name == "SklearnForwardSFS" and dataset_id == 189354:
+                continue
+            elif method_name == "MACFE" and dataset_id == 146818:
+                continue
+            elif method_name == "SklearnLinearSVC" and dataset_id == 167210:
+                continue
+            elif method_name == "SklearnLinearSVC" and dataset_id == 168757:
+                continue
+            elif method_name == "SklearnLinearSVC" and dataset_id == 189354:
+                continue
+            elif method_name == "MetaFE" and dataset_id == 167120:
+                continue
+            elif method_name == "MetaFE" and dataset_id == 167210:
+                continue
+            elif method_name == "MetaFE" and dataset_id == 168757:
+                continue
+            elif method_name == "MetaFE" and dataset_id == 189354:
+                continue
+            elif method_name == "mRMR" and dataset_id == 167210:
+                continue
+            elif method_name == "mRMR" and dataset_id == 168757:
+                continue
+            elif method_name == "mRMR" and dataset_id == 189354:
                 continue
             else:
                 output_path = f"data/{path_name}_{dataset_id}.parquet"

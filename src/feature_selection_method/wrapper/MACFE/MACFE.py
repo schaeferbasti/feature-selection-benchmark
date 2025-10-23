@@ -37,7 +37,7 @@ def get_macfe_features(train_x, train_y, test_x, test_y, name) -> tuple[
 
     X = df_fe.drop(columns=["class"])
     y = df_fe["class"]
-    train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.1)
+    train_x, test_x, train_y, test_y = train_test_split(X, y, test_size=0.2, random_state=42)
     return train_x, test_x
 
 

@@ -15,7 +15,12 @@ def main(dataset_id):
         print("File exists" + str(data.head()) + "\n\n")
     except FileNotFoundError:
         print("Calculate Feature Selection")
-        lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X_train, y_train)
+        try:
+            lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X_train, y_train)
+        except ValueError:
+            X_train.fillna(method="ffill", inplace=True)
+            X_test.fillna(method="ffill", inplace=True)
+            lsvc = LinearSVC(C=0.01, penalty="l1", dual=False).fit(X_train, y_train)
         model = SelectFromModel(lsvc, prefit=True)
         X_train_new = model.transform(X_train)
         X_test_new = model.transform(X_test)

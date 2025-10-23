@@ -160,6 +160,7 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
 
 
 def main(dataset_id):
+    last_reset_time = Value(ctypes.c_double, time.time())
     wanted_max_relative_downgrade = 0.1
     memory_limit_mb = 64000
     time_limit_seconds = 1800
