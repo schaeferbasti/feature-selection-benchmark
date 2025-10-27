@@ -13,8 +13,6 @@ def send_notification(title, message):
 
 def run_methods(dataset_ids):
     methods = glob.glob("feature_selection_method/*/*/*.py")
-    with open("results/times.txt", 'a') as f:
-        f.write(f" *************************************************** \n Time per Method and Dataset \n *************************************************** \n\n")
     for method in methods:
         if any(skip in method for skip in ["Add_Pandas_Metafeatures.py", "MUFS.py", "Metrics.py", "MAFESE.py", "BioAutoML.py", "MACFE.py"]):
             continue
