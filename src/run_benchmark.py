@@ -100,7 +100,7 @@ def run_benchmark(models, classification_scores, regression_scores):
 
 
 if __name__ == "__main__":
-    models = ["LightGBM_BAG_L1"]
+    models = ["HistGradientBoosting", "RandomForest"]
     classification_scores = ["log_loss"]
     regression_scores = ["root_mean_squared_error"]
     run_benchmark(models, classification_scores, regression_scores)
