@@ -101,7 +101,7 @@ def get_openml_dataset(openml_task_id: int) -> tuple[
     return X, y
 
 
-def split_data(data, target_label) -> tuple[
+def split_data(data, target_label, seed) -> tuple[
     pd.DataFrame,
     pd.DataFrame,
     pd.DataFrame,
@@ -109,7 +109,7 @@ def split_data(data, target_label) -> tuple[
 ]:
     y = data[target_label]
     X = data.drop(target_label, axis=1)
-    train_idx, test_idx, y_train, y_test = train_test_split(X.index, y, test_size=0.2)
+    train_idx, test_idx, y_train, y_test = train_test_split(X.index, y, test_size=0.2, random_state=seed)
     X_train, y_train = X.iloc[train_idx], y.iloc[train_idx]
     X_test, y_test = X.iloc[test_idx], y.iloc[test_idx]
     return X_train, y_train, X_test, y_test
@@ -191,7 +191,7 @@ def preprocess_data(train_x, test_x) -> (pd.DataFrame, pd.DataFrame):
     return train_x, test_x
 
 
-def get_dataset_split(dataset_id: int) -> tuple[
+def get_dataset_split(dataset_id: int, seed) -> tuple[
     pd.DataFrame,
     pd.DataFrame,
     pd.DataFrame,
@@ -202,7 +202,7 @@ def get_dataset_split(dataset_id: int) -> tuple[
         data = pd.read_parquet("data/original/1.parquet")
         y = data["Event"]
         X = data.drop(columns=["Event"])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
         dataset_metadata = {"task_id": 1, "task_type": "Supervised Classification", "number_of_classes": 'N/A'}
     elif dataset_id == 2:
         data = pd.read_parquet("data/original/2.parquet")
@@ -210,7 +210,7 @@ def get_dataset_split(dataset_id: int) -> tuple[
         y = data["Event"]
         print(y.value_counts(dropna=False))
         X = data.drop(columns=["Event", "Sea breezes", "Fogs", "Storms", "Passage of Front"])
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=seed)
         dataset_metadata = {"task_id": 2, "task_type": "Multiclass", "number_of_classes": 'N/A'}
     else:
         task = openml.tasks.get_task(

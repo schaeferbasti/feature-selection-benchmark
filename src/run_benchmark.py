@@ -9,8 +9,8 @@ from src.utils.get_data import split_data, get_openml_dataset_split_and_metadata
 from src.utils.run_models import get_sklearn_model_score_classification, get_sklearn_model_score_regression
 
 
-def run_benchmark(models, classification_scores, regression_scores):
-    for fold in range(2):
+def run_benchmark(folds, models, classification_scores, regression_scores):
+    for fold in range(folds):
         target_label = 'target'
 
         result_files = glob.glob("data/*/*.parquet")
@@ -57,13 +57,12 @@ def run_benchmark(models, classification_scores, regression_scores):
                     result_path = f"results/{method_and_dataset}.parquet"
                     try:
                         existing_results = pd.read_parquet(result_path)
-                        if fold in existing_results["seed"]:
+                        if fold in existing_results["seed"].values and model in existing_results["model"].values:
                             combined_results.append(existing_results)
-                            continue
                         else:
                             try:
                                 df = pd.read_parquet(data_file)
-                                Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label)
+                                Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label, fold)
                                 if task_type == 'Supervised Classification':
                                     results = get_sklearn_model_score_classification(Xf_train, yf_train, Xf_test,
                                                                                      yf_test, dataset_id, method_name,
@@ -78,11 +77,11 @@ def run_benchmark(models, classification_scores, regression_scores):
                             except KeyError:
                                 print('No data file')
                                 continue
-                        combined_results.append(existing_results)
+                            combined_results.append(existing_results)
                     except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
                         try:
                             df = pd.read_parquet(data_file)
-                            Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label)
+                            Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label, fold)
                             if task_type == 'Supervised Classification':
                                 results = get_sklearn_model_score_classification(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name, model, fold, classification_scores)
                             else:
@@ -100,7 +99,8 @@ def run_benchmark(models, classification_scores, regression_scores):
 
 
 if __name__ == "__main__":
+    folds = 2
     models = ["HistGradientBoosting", "RandomForest"]
     classification_scores = ["log_loss"]
     regression_scores = ["root_mean_squared_error"]
-    run_benchmark(models, classification_scores, regression_scores)
+    run_benchmark(folds, models, classification_scores, regression_scores)
