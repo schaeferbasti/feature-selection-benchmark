@@ -304,7 +304,7 @@ def get_sklearn_model_score_classification(X_train, y_train, X_test, y_test, dat
 
 
 def get_sklearn_model_classification(model_name, seed):
-    if model_name == "LightGBM":
+    if model_name == "HistGradientBoosting":
         model = HistGradientBoostingClassifier(random_state=seed)
     elif model_name == "RandomForest":
         model = RandomForestClassifier(random_state=seed)
@@ -312,9 +312,9 @@ def get_sklearn_model_classification(model_name, seed):
         model = MLPClassifier(random_state=seed)
     elif model_name == "SVM":
         model = SVC(random_state=seed)
-    elif model_name == "Naive Bayes":
+    elif model_name == "GaussianNB":
         model = GaussianNB()
-    elif model_name == "KNN":
+    elif model_name == "KNeighbors":
         model = KNeighborsClassifier()
     else:
         model = HistGradientBoostingClassifier()
@@ -344,7 +344,7 @@ def get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset
 
 
 def get_sklearn_model_regression(model_name, seed):
-    if model_name == "LightGBM":
+    if model_name == "HistGradientBoosting":
         model = HistGradientBoostingRegressor(random_state=seed)
     elif model_name == "RandomForest":
         model = RandomForestRegressor(random_state=seed)
@@ -352,9 +352,9 @@ def get_sklearn_model_regression(model_name, seed):
         model = MLPRegressor(random_state=seed)
     elif model_name == "SVM":
         model = SVR()
-    elif model_name == "Naive Bayes":
+    elif model_name == "GaussianNB":
         model = GaussianNB()
-    elif model_name == "KNN":
+    elif model_name == "KNeighbors":
         model = KNeighborsRegressor()
     else:
         model = HistGradientBoostingRegressor()
