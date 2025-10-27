@@ -1,6 +1,8 @@
 import numpy as np
 from sklearn import preprocessing
 import pandas as pd
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 
 
 def factorize_dataset(X_train, y_train, X_test, y_test):
@@ -36,7 +38,7 @@ def factorize_transformed_dataset(X_train, y_train, X_test, y_test):
 def factorize_data(X_train):
     lbl = preprocessing.LabelEncoder()
     for column in X_train.columns:
-        X_train[column] = lbl.fit_transform(X_train[column].astype(int))
+        X_train[column] = pd.factorize(X_train[column])
     return X_train
 
 
@@ -70,3 +72,65 @@ def factorize_data_old(X_train, y_train, X_test, y_test):
         int)  # .interpolate(method="pad").astype(int)  # Ensure mapping consistency
 
     return X_train, y_train, X_test, y_test
+
+
+def encode_categorical_features(X_train, X_test):
+    cat_features = X_train.select_dtypes(include=['object', 'category']).columns
+    encoder = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+
+    if len(cat_features) > 0:
+        # Fit encoder on training data
+        encoder.fit(X_train[cat_features])
+        # Transform both train and test
+        X_train_encoded = X_train.copy()
+        X_test_encoded = X_test.copy()
+        X_train_encoded[cat_features] = encoder.transform(X_train[cat_features])
+        X_test_encoded[cat_features] = encoder.transform(X_test[cat_features])
+        return X_train_encoded, X_test_encoded
+    else:
+        # No categorical features to encode
+        return X_train, X_test
+
+
+def factorize_features(X_train, X_test):
+    """Encode categorical features and handle mixed data types"""
+
+    # Identify categorical and numerical columns
+    categorical_columns = X_train.select_dtypes(include=['object', 'category']).columns.tolist()
+    numerical_columns = X_train.select_dtypes(include=[np.number]).columns.tolist()
+
+    if categorical_columns:
+        # Create preprocessor
+        preprocessor = ColumnTransformer(
+            transformers=[
+                ('num', 'passthrough', numerical_columns),
+                ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_columns)
+            ],
+            remainder='passthrough'
+        )
+
+        # Fit on training data and transform both
+        X_train_encoded = preprocessor.fit_transform(X_train)
+        X_test_encoded = preprocessor.transform(X_test)
+
+        return X_train_encoded, X_test_encoded
+    else:
+        # No categorical columns, return as-is
+        return X_train, X_test
+
+
+def factorize_target(y_train, y_test):
+    """Encode categorical target variables"""
+
+    # Check if target is categorical (object or category dtype)
+    if y_train.dtype == 'object' or y_train.dtype.name == 'category':
+
+        # Create and fit LabelEncoder on training data
+        label_encoder = LabelEncoder()
+        y_train_encoded = label_encoder.fit_transform(y_train)
+        y_test_encoded = label_encoder.transform(y_test)
+
+        return y_train_encoded, y_test_encoded
+    else:
+        # Already numerical, return as-is
+        return y_train.values, y_test.values

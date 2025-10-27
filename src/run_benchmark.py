@@ -6,12 +6,11 @@ from collections import defaultdict
 import pyarrow
 
 from src.utils.get_data import split_data, get_openml_dataset_split_and_metadata, concat_data
-from src.utils.run_models import get_model_score_origin_classification, get_model_score_origin_regression, \
-    get_sklearn_model_score_classification, get_sklearn_model_score_regression
+from src.utils.run_models import get_sklearn_model_score_classification, get_sklearn_model_score_regression
 
 
 def run_benchmark(models, classification_scores, regression_scores):
-    for fold in range(1):
+    for fold in range(2):
         target_label = 'target'
 
         result_files = glob.glob("data/*/*.parquet")
@@ -40,9 +39,9 @@ def run_benchmark(models, classification_scores, regression_scores):
                     X_test_copy = X_test.copy()
                     y_test_copy = y_test.copy()
                     if task_type == "Supervised Classification":
-                        original_results = get_sklearn_model_score_classification(X_train_copy, y_train_copy, X_test_copy, y_test_copy, dataset_id, "Original", model, classification_scores)
+                        original_results = get_sklearn_model_score_classification(X_train_copy, y_train_copy, X_test_copy, y_test_copy, dataset_id, "Original", model, fold, classification_scores)
                     else:
-                        original_results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "Original", model, regression_scores)
+                        original_results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "Original", model, fold, regression_scores)
                     original_results = original_results[original_results['model'] == "LightGBM_BAG_L1"]
                     original_results.to_parquet(f"results/Original_{dataset_id}.parquet")
                 print("Original Results loaded.")
@@ -57,7 +56,29 @@ def run_benchmark(models, classification_scores, regression_scores):
                     method_name = method_and_dataset.split('_')[0]
                     result_path = f"results/{method_and_dataset}.parquet"
                     try:
-                        results = pd.read_parquet(result_path)
+                        existing_results = pd.read_parquet(result_path)
+                        if fold in existing_results["seed"]:
+                            combined_results.append(existing_results)
+                            continue
+                        else:
+                            try:
+                                df = pd.read_parquet(data_file)
+                                Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label)
+                                if task_type == 'Supervised Classification':
+                                    results = get_sklearn_model_score_classification(Xf_train, yf_train, Xf_test,
+                                                                                     yf_test, dataset_id, method_name,
+                                                                                     model, fold, classification_scores)
+                                else:
+                                    results = get_sklearn_model_score_regression(Xf_train, yf_train, Xf_test, yf_test,
+                                                                                 dataset_id, method_name, model, fold,
+                                                                                 regression_scores)
+                                results = results[results['model'] == model]
+                                existing_results = pd.concat([existing_results, results], ignore_index=True)
+                                existing_results.to_parquet(result_path)
+                            except KeyError:
+                                print('No data file')
+                                continue
+                        combined_results.append(existing_results)
                     except (FileNotFoundError, pyarrow.lib.ArrowInvalid):
                         try:
                             df = pd.read_parquet(data_file)
@@ -71,8 +92,6 @@ def run_benchmark(models, classification_scores, regression_scores):
                         except KeyError:
                             print('No data file')
                             continue
-                        combined_results.append(results)
-                    else:
                         combined_results.append(results)
 
                 all_results = pd.concat(combined_results, ignore_index=True).drop_duplicates()

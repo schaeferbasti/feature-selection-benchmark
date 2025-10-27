@@ -1,21 +1,21 @@
+import pandas
 import pandas as pd
 import logging
 import os
 import ray
 import tempfile
 
-import sklearn
-from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier, HistGradientBoostingRegressor, \
-    RandomForestRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier, HistGradientBoostingRegressor, RandomForestRegressor
 from sklearn.metrics import log_loss, root_mean_squared_error
 from autogluon.tabular import TabularPredictor
 import lightgbm as lgb
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.svm import SVC
+from sklearn.svm import SVC, SVR
 
 from src.utils.Autogluon_MultilabelPredictor import MultilabelPredictor
+from src.utils.preprocess_data import factorize_features, factorize_target
 from src.utils.tabrepo_2024_custom import zeroshot2024
 
 
@@ -291,14 +291,15 @@ def get_zeroshot_models(allowed_models, zeroshot):
 def get_sklearn_model_score_classification(X_train, y_train, X_test, y_test, dataset_id, origin, model_name, seed, score_names):
     model = get_sklearn_model_classification(model_name, seed)
     model.set_params(random_state=seed)
+    X_train, X_test = factorize_features(X_train, X_test)
+    y_train, y_test = factorize_target(y_train, y_test)
     model.fit(X_train, y_train)
     score_val = model.score(X_train, y_train)
-    y_pred = model.predict(X_test)
+    y_pred = model.predict_proba(X_test)
     for score_name in score_names:
-        score = get_sklearn_classification_scores(score_name)
-        score_test = score(y_test, y_pred)
-        new_results = pd.DataFrame(columns=['origin', 'task_type', 'dataset', 'model', 'score_val', 'score_test'])
-        new_results.loc[len(new_results)] = [origin, "Classification", dataset_id, model_name, score_val, score_test]
+        score_test = get_sklearn_classification_scores(score_name, y_test, y_pred)
+        new_results = pd.DataFrame(columns=['origin', 'task_type', 'dataset', 'model', 'seed', 'score_name', 'score_val', 'score_test'])
+        new_results.loc[len(new_results)] = [origin, "Classification", dataset_id, model_name, seed, score_name, score_val, score_test]
     return new_results
 
 
@@ -320,24 +321,25 @@ def get_sklearn_model_classification(model_name, seed):
     return model
 
 
-def get_sklearn_classification_scores(score_name):
+def get_sklearn_classification_scores(score_name, y_test, y_pred):
     if score_name == "log_loss":
-        score = log_loss()
+        score = log_loss(y_test, y_pred)
     else:
-        score = log_loss()
+        score = log_loss(y_test, y_pred)
     return score
 
 def get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, origin, model_name, seed, score_names):
     model = get_sklearn_model_regression(model_name, seed)
     model.set_params(random_state=seed)
+    X_train, X_test = factorize_features(X_train, X_test)
+    y_train, y_test = factorize_target(y_train, y_test)
     model.fit(X_train, y_train)
     score_val = model.score(X_train, y_train)
     y_pred = model.predict(X_test)
     for score_name in score_names:
-        score = get_sklearn_classification_scores(score_name)
-        score_test = score(y_test, y_pred)
-        new_results = pd.DataFrame(columns=['origin', 'task_type', 'dataset', 'model', 'score_val', 'score_test'])
-        new_results.loc[len(new_results)] = [origin, "Classification", dataset_id, model_name, score_val, score_test]
+        score_test = get_sklearn_regression_scores(score_name, y_test, y_pred)
+        new_results = pd.DataFrame(columns=['origin', 'task_type', 'dataset', 'model', 'seed', 'score_name', 'score_val', 'score_test'])
+        new_results.loc[len(new_results)] = [origin, "Classification", dataset_id, model_name, seed, score_name, score_val, score_test]
     return new_results
 
 
@@ -349,7 +351,7 @@ def get_sklearn_model_regression(model_name, seed):
     elif model_name == "MLP":
         model = MLPRegressor(random_state=seed)
     elif model_name == "SVM":
-        model = SVC(random_state=seed)
+        model = SVR()
     elif model_name == "Naive Bayes":
         model = GaussianNB()
     elif model_name == "KNN":
@@ -359,9 +361,9 @@ def get_sklearn_model_regression(model_name, seed):
     return model
 
 
-def get_sklearn_regression_scores(score_name):
+def get_sklearn_regression_scores(score_name, y_test, y_pred):
     if score_name == "root_mean_squared_error":
-        score = root_mean_squared_error()
+        score = root_mean_squared_error(y_test, y_pred)
     else:
-        score = root_mean_squared_error()
+        score = root_mean_squared_error(y_test, y_pred)
     return score

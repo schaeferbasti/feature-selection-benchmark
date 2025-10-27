@@ -64,6 +64,30 @@ def run_methods(dataset_ids):
                 continue
             elif method_name == "mRMR" and dataset_id == 189354:
                 continue
+            elif method_name == "CorrelationBasedFS" and dataset_id == 189354:
+                continue
+            elif method_name == "SkrebateReliefF":
+                continue
+            elif method_name == "SklearnSelectPercentileMutualInfoClassif":
+                continue
+            elif method_name == "SklearnSelectKBestClassifF":
+                continue
+            elif method_name == "SkrebateSURF":
+                continue
+            elif method_name == "SklearnSelectKBestChi2":
+                continue
+            elif method_name == "SklearnVarianceThreshold" and dataset_id == 167120:
+                continue
+            elif method_name == "SklearnVarianceThreshold" and dataset_id == 167210:
+                continue
+            elif method_name == "SklearnVarianceThreshold" and dataset_id == 168757:
+                continue
+            elif method_name == "SklearnVarianceThreshold" and dataset_id == 189354:
+                continue
+            elif method_name == "SklearnRFE":
+                continue
+            elif method_name == "SklearnRFECV":
+                continue
             else:
                 output_path = f"data/{path_name}_{dataset_id}.parquet"
                 try:

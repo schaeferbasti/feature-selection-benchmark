@@ -9,7 +9,7 @@ def run_everything(dataset_ids, models, classification_scores, regression_scores
     # Run Benchmark
     run_benchmark(models, classification_scores, regression_scores)
     # Run Result Analysis
-    analysis()
+    # analysis()
 
 
 if __name__ == "__main__":
