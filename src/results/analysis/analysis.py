@@ -307,59 +307,6 @@ def make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe, columns_per
 """
 
 
-def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
-    if "without_FE" in name:
-        score_type = name.split("_")[0]
-        if score_type == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
-        large_plot = True
-        without_fe = True
-        df_pivot = df_pivot.drop(columns=["OpenFE", "MetaFE"])
-    else:
-        if name == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
-        large_plot = True
-        without_fe = False
-        column_to_move = df_pivot.pop("OpenFE")
-        df_pivot.insert(len(df_pivot.columns), "OpenFE", column_to_move)
-        # if score_type == "test":
-            # make_latex_tables_as_one(df_pivot, df_pivot_std, without_openfe)
-    if without_fe:
-        colors = cm.get_cmap('nipy_spectral')
-        color_list: list[ndarray | tuple[float, float, float, float]] = [colors(i) for i in np.linspace(0, 0.95, len(df_pivot.columns))]
-    else:
-        colors = cm.get_cmap('nipy_spectral', len(df_pivot.columns))
-
-    dataset_list_wrapped = df_pivot.index.tolist()
-    if large_plot:
-        plt.figure(figsize=(12, 10))
-        if without_fe:
-            for idx, method in enumerate(df_pivot.columns):
-                plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method, color=color_list[idx])
-        else:
-            for idx, method in enumerate(df_pivot.columns):
-                plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method, color=colors(idx))
-    else:
-        plt.figure(figsize=(12, 7))
-        for method in df_pivot.columns:
-            plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method)
-    plt.xlabel("Dataset")
-    plt.xticks(rotation=90)  # or 45
-    plt.ylabel(score_type.title() + " error")
-    plt.title(
-        score_type.title() + " error of the model on the feature-engineered datasets, the original and the randomly feature-engineered datasets")
-    plt.legend()
-    plt.yscale("log")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig("results/analysis/Graph_" + name + ".png")
-    plt.show()
-
-
 def plot_count_best(df_pivot_val, df_pivot_test, name, score_name):
     direction = get_metric_direction(score_name)
     if direction == "lower":
@@ -456,6 +403,64 @@ def plot_boxplot_percentage_impr(baseline_col, df_pivot, name, score_name):
     plt.xticks(rotation=90, ha="right")
     plt.tight_layout()
     plt.savefig(f"results/analysis/Boxplot_Percentage_Improvement_{name}.png")
+    plt.close()
+
+
+def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name, score_name):
+    direction = get_metric_direction(score_name)
+    if "without_FE" in name:
+        score_type = name.split("_")[0]
+        if score_type == "Val":
+            score_type = "validation"
+        else:
+            score_type = "test"
+        large_plot = True
+        without_fe = True
+        df_pivot = df_pivot.drop(columns=["OpenFE", "MetaFE"], errors='ignore')
+    else:
+        if name == "Val":
+            score_type = "validation"
+        else:
+            score_type = "test"
+        large_plot = True
+        without_fe = False
+        if "OpenFE" in df_pivot.columns:
+            column_to_move = df_pivot.pop("OpenFE")
+            df_pivot.insert(len(df_pivot.columns), "OpenFE", column_to_move)
+
+    if without_fe:
+        colors = cm.get_cmap('nipy_spectral')
+        color_list: list[ndarray | tuple[float, float, float, float]] = [colors(i) for i in
+                                                                         np.linspace(0, 0.95, len(df_pivot.columns))]
+    else:
+        colors = cm.get_cmap('nipy_spectral', len(df_pivot.columns))
+
+    dataset_list_wrapped = df_pivot.index.tolist()
+    if large_plot:
+        plt.figure(figsize=(12, 10))
+        if without_fe:
+            for idx, method in enumerate(df_pivot.columns):
+                plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method, color=color_list[idx])
+        else:
+            for idx, method in enumerate(df_pivot.columns):
+                plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method, color=colors(idx))
+    else:
+        plt.figure(figsize=(12, 7))
+        for method in df_pivot.columns:
+            plt.plot(dataset_list_wrapped, df_pivot[method], marker='o', label=method)
+
+    plt.xlabel("Instance")
+    plt.xticks(rotation=90)
+    plt.ylabel(f"{score_type.title()} {score_name}")
+    plt.title(
+        f"{score_name.replace('_', ' ').title()} of the model on the feature-engineered / selected datasets, "
+        f"and original datasets\n({direction} is better)"
+    )
+    plt.legend()
+    plt.yscale("log")
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f"results/analysis/Graph_{name}.png")
     plt.close()
 
 
@@ -559,14 +564,12 @@ def analysis():
             df_pivot_test = df_pivot_test.drop(columns=["MACFE"])
             df_pivot_test_std = df_pivot_test_std.drop(columns=["MACFE"])
         except KeyError:
-            print("MACFE not found")
-        plot_score_graph(dataset_list, df_pivot_val, df_pivot_val_std, f"Val_{score_name}")
-        plot_score_graph(dataset_list, df_pivot_test, df_pivot_test_std, f"Test_{score_name}")
-
+            pass
+        plot_score_graph(dataset_list, df_pivot_val, df_pivot_val_std, f"Val_{score_name}", score_name)
+        plot_score_graph(dataset_list, df_pivot_test, df_pivot_test_std, f"Test_{score_name}", score_name)
         plot_count_best(df_pivot_val, df_pivot_test, f"{score_name}_", score_name)
         plot_avg_percentage_impr(baseline_col, df_pivot_val, df_pivot_val_std, f"Val_{score_name}", score_name)
         plot_avg_percentage_impr(baseline_col, df_pivot_test, df_pivot_test_std, f"Test_{score_name}", score_name)
-
         plot_boxplot_percentage_impr(baseline_col, df_pivot_val, f"Val_{score_name}", score_name)
         plot_boxplot_percentage_impr(baseline_col, df_pivot_test, f"Test_{score_name}", score_name)
 
@@ -576,6 +579,8 @@ def analysis():
         df_pivot_val_without_FE.drop(columns=["OpenFE", "MetaFE"], inplace=True, errors='ignore')
         df_pivot_test_without_FE.drop(columns=["OpenFE", "MetaFE"], inplace=True, errors='ignore')
 
+        plot_score_graph(dataset_list, df_pivot_val_without_FE, df_pivot_val_std, f"Val_{score_name}_without_FE_", score_name)
+        plot_score_graph(dataset_list, df_pivot_test_without_FE, df_pivot_test_std, f"Test_{score_name}_without_FE_", score_name)
         plot_count_best(df_pivot_val_without_FE, df_pivot_test_without_FE, f"{score_name}_without_FE_", score_name)
         plot_avg_percentage_impr(baseline_col, df_pivot_val_without_FE, df_pivot_val_std, f"Val_{score_name}_without_FE", score_name)
         plot_avg_percentage_impr(baseline_col, df_pivot_test_without_FE, df_pivot_test_std, f"Test_{score_name}_without_FE", score_name)
