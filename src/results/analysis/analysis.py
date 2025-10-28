@@ -9,13 +9,18 @@ matplotlib.use('Agg')  # Use non-interactive backend
 import matplotlib.cm as cm
 from numpy import ndarray
 
-def insert_line_breaks(name, max_len=20):
-    if len(name) > max_len:
-        # Split into chunks of `max_len`, preserving words if possible
-        parts = [name[i:i + max_len] for i in range(0, len(name), max_len)]
-        return '\n'.join(parts)
+
+LOWER_BETTER = ["log_loss", "root_mean_squared_error", "max_error"]
+HIGHER_BETTER = ["roc_auc_score"]
+
+def get_metric_direction(score_name):
+    if score_name in LOWER_BETTER:
+        return "lower"
+    elif score_name in HIGHER_BETTER:
+        return "higher"
     else:
-        return name
+        # Default to lower is better
+        return "lower"
 
 
 def get_data(result_files):
@@ -138,6 +143,15 @@ def make_model_name_nice(df_pivot):
         model_names_nice.append(model_name)
     df_pivot.columns = model_names_nice
     return df_pivot
+
+
+def insert_line_breaks(name, max_len=20):
+    if len(name) > max_len:
+        # Split into chunks of `max_len`, preserving words if possible
+        parts = [name[i:i + max_len] for i in range(0, len(name), max_len)]
+        return '\n'.join(parts)
+    else:
+        return name
 
 
 def make_latex_table(df_pivot, without_openfe):
@@ -346,92 +360,76 @@ def plot_score_graph(dataset_list_wrapped, df_pivot, df_pivot_std, name):
     plt.show()
 
 
-def plot_count_best(df_pivot_val, df_pivot_test, name):
-    minValueIndex_val = df_pivot_val.idxmin(axis=1).value_counts()
-    minValueIndex_test = df_pivot_test.idxmin(axis=1).value_counts()
-    # Plot
+def plot_count_best(df_pivot_val, df_pivot_test, name, score_name):
+    direction = get_metric_direction(score_name)
+    if direction == "lower":
+        minValueIndex_val = df_pivot_val.idxmin(axis=1).value_counts()
+        minValueIndex_test = df_pivot_test.idxmin(axis=1).value_counts()
+        title = "Count of the lowest validation/test error of the model"
+    else:  # higher is better (AUC)
+        minValueIndex_val = df_pivot_val.idxmax(axis=1).value_counts()
+        minValueIndex_test = df_pivot_test.idxmax(axis=1).value_counts()
+        title = "Count of the highest validation/test score of the model"
+
     plt.figure(figsize=(12, 7))
-    minValueIndex_val.plot(kind='bar', color='skyblue', label='Number of instances with the lowest validation error')
+    minValueIndex_val.plot(kind='bar', color='skyblue', label=f'Validation ({direction} is better)')
     minValueIndex_test.plot(kind='bar', width=0.3, color='darkblue',
-                            label='Number of instances with the lowest test error')
+                            label=f'Test ({direction} is better)')
     plt.legend()
     plt.xlabel("Method")
     plt.ylabel("Number of instances")
-    plt.title("Count of the lowest validation and test error of the model")
+    plt.title(title)
     plt.xticks(rotation=90, ha="right")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig("results/analysis/Count_Best_" + name + "bar.png")
-    plt.show()
+    plt.savefig(f"results/analysis/Count_Best_{name}_bar.png")
+    plt.close()
 
 
-def plot_avg_percentage_impr(baseline_col, df_pivot, df_pivot_std, name, only_pandas=False):
-    if "without_FE" in name:
-        score_type = name.split("_")[0]
-        if score_type == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
-    else:
-        if name == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
+def plot_avg_percentage_impr(baseline_col, df_pivot, df_pivot_std, name, score_name, only_pandas=False):
+    direction = get_metric_direction(score_name)
+    score_type = "validation" if "Val" in name else "test"
     improvement = pd.DataFrame()
     for method in df_pivot.columns:
         if method == baseline_col:
             continue
-        calc_loss_improvement = ((df_pivot[baseline_col] - df_pivot[method]) / df_pivot[baseline_col]) * 100
-        # calc = ((df_pivot[baseline_col] - df_pivot[method]) / df_pivot[method]) * 100
-        # f1 = ((df_pivot[method] - df_pivot[baseline_col]) / df_pivot[baseline_col]) * 100
-        # increase_in_error = ((df_pivot[method] - df_pivot[baseline_col]) / df_pivot[baseline_col]) * 100
-        improvement[method] = calc_loss_improvement
+        if direction == "lower":
+            calc_improvement = ((df_pivot[baseline_col] - df_pivot[method]) / df_pivot[baseline_col]) * 100
+        else:  # higher is better
+            calc_improvement = ((df_pivot[method] - df_pivot[baseline_col]) / df_pivot[baseline_col]) * 100
+        improvement[method] = calc_improvement
     avg_improvement = improvement.mean().sort_values(ascending=False)
-    # for i, val in enumerate(avg_improvement_test):
-    #    plt.text(i, val + (1 if val >= 0 else -1), f"{val:.2f}%", ha='center', va='bottom' if val >= 0 else 'top')
     plt.figure(figsize=(12, 7))
-    # avg_improvement_test.plot(kind="bar", color="skyblue")
     bars = avg_improvement.plot(kind="bar", color="skyblue")
-    if only_pandas:
-        for i, val in enumerate(avg_improvement):
-            y = 0.5  # adjust offset for spacing
-            plt.text(i, y, f"{val:.2f}%", ha='center', va='top' if val >= 0 else 'bottom', color='black')
-    else:
-        for i, val in enumerate(avg_improvement):
-            y = -0.1 if val >= 0 else 0  # adjust offset for spacing
-            plt.text(i, y, f"{val:.2f}%", ha='center', va='top' if val >= 0 else 'bottom', color='black', fontsize=8)
-            plt.yscale("symlog", linthresh=1)
+    # Labels
+    for i, val in enumerate(avg_improvement):
+        y = -0.1 if val >= 0 else 0
+        plt.text(i, y, f"{val:.2f}%", ha='center', va='top' if val >= 0 else 'bottom', color='black', fontsize=8)
     plt.axhline(0, color="black", linewidth=0.8)
     plt.title(
-        "Average percentage error reduction of the " + score_type + " error of the model\nin relation to the " + score_type + " error of the model on the original datasets")
+        f"Average percentage improvement ({score_type}) – {score_name} ({direction} is better)\nrelative to baseline ({baseline_col})")
     plt.xlabel("Method")
-    plt.ylabel("Percentage error reduction of the " + score_type + " error\nin relation to the " + score_type + " error on the original datasets")
+    plt.ylabel(f"Percentage {'reduction' if direction=='lower' else 'increase'} in {score_type} {score_name}\nrelative to baseline")
     plt.xticks(rotation=90, ha="right")
     plt.grid(True, linestyle="--", alpha=0.6)
     plt.tight_layout()
-    plt.savefig("results/analysis/Average_Percentage_Improvement_" + name + ".png")
-    plt.show()
+    plt.savefig(f"results/analysis/Average_Percentage_Improvement_{name}.png")
+    plt.close()
 
 
-def plot_boxplot_percentage_impr(baseline_col, df_pivot, name):
+def plot_boxplot_percentage_impr(baseline_col, df_pivot, name, score_name):
     np.random.seed(0)
-    if "without_FE" in name:
-        score_type = name.split("_")[0]
-        if score_type == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
-    else:
-        if name == "Val":
-            score_type = "validation"
-        else:
-            score_type = "test"
+    direction = get_metric_direction(score_name)
+    score_type = "validation" if "Val" in name else "test"
     improvement_test = pd.DataFrame()
     for method in df_pivot.columns:
         if method == baseline_col:
             continue
-        improvement = (df_pivot[baseline_col] - df_pivot[method]) / df_pivot[baseline_col] * 100
-        # Clip outliers for better visualization (e.g., 5th and 95th percentile)
+        if direction == "lower":
+            improvement = (df_pivot[baseline_col] - df_pivot[method]) / df_pivot[baseline_col] * 100
+        else:  # higher
+            improvement = (df_pivot[method] - df_pivot[baseline_col]) / df_pivot[baseline_col] * 100
+        # Clip outliers
         Q1 = improvement.quantile(0.25)
         Q3 = improvement.quantile(0.75)
         IQR = Q3 - Q1
@@ -439,27 +437,26 @@ def plot_boxplot_percentage_impr(baseline_col, df_pivot, name):
         upper = Q3 + 1.5 * IQR
         improvement_clipped = improvement.clip(lower, upper)
         improvement_test[method] = improvement
-
-    # Sort methods by mean improvement (descending)
     method_order = improvement_test.mean().sort_values(ascending=False).index.tolist()
     improvement_test = improvement_test[method_order]
 
-    # Plot
     plt.figure(figsize=(12, 7))
     improvement_test.boxplot(column=method_order, grid=True)
     for i, method in enumerate(method_order):
         y = improvement_test[method].dropna()
-        x = np.random.normal(loc=i + 1, scale=0.05, size=len(y))  # jitter around box center
+        x = np.random.normal(loc=i + 1, scale=0.05, size=len(y))
         plt.plot(x, y, 'o', alpha=0.4, markersize=4, color='blue')
     plt.axhline(0, color="black", linewidth=0.8, linestyle="--")
     plt.yscale("symlog", linthresh=1)
-    plt.title("Distribution of the percentage error reduction of the " + score_type + " error of the model\nin relation to the " + score_type + " error of the model on the original datasets")
+    plt.title(
+        f"Distribution of percentage improvement of {score_type} {score_name} ({direction} is better)\nrelative to baseline")
     plt.xlabel("Method")
-    plt.ylabel("Percentage error reduction of the " + score_type + " error\nin relation to the " + score_type + " error on the original datasets")
+    plt.ylabel(
+        f"Percentage improvement of {score_type} {score_name}\nrelative to baseline")
     plt.xticks(rotation=90, ha="right")
     plt.tight_layout()
     plt.savefig(f"results/analysis/Boxplot_Percentage_Improvement_{name}.png")
-    plt.show()
+    plt.close()
 
 
 def plot_pareto_front():
@@ -556,16 +553,22 @@ def analysis():
     # Plot for each score separately
     for score_name, (df_pivot_val, df_pivot_val_std, df_pivot_test, df_pivot_test_std, dataset_list) in results_by_score.items():
         print(f"\nProcessing score: {score_name}")
-
+        try:
+            df_pivot_val = df_pivot_val.drop(columns=["MACFE"])
+            df_pivot_val_std = df_pivot_val_std.drop(columns=["MACFE"])
+            df_pivot_test = df_pivot_test.drop(columns=["MACFE"])
+            df_pivot_test_std = df_pivot_test_std.drop(columns=["MACFE"])
+        except KeyError:
+            print("MACFE not found")
         plot_score_graph(dataset_list, df_pivot_val, df_pivot_val_std, f"Val_{score_name}")
         plot_score_graph(dataset_list, df_pivot_test, df_pivot_test_std, f"Test_{score_name}")
 
-        plot_count_best(df_pivot_val, df_pivot_test, f"{score_name}_")
-        plot_avg_percentage_impr(baseline_col, df_pivot_val, df_pivot_val_std, f"Val_{score_name}")
-        plot_avg_percentage_impr(baseline_col, df_pivot_test, df_pivot_test_std, f"Test_{score_name}")
+        plot_count_best(df_pivot_val, df_pivot_test, f"{score_name}_", score_name)
+        plot_avg_percentage_impr(baseline_col, df_pivot_val, df_pivot_val_std, f"Val_{score_name}", score_name)
+        plot_avg_percentage_impr(baseline_col, df_pivot_test, df_pivot_test_std, f"Test_{score_name}", score_name)
 
-        plot_boxplot_percentage_impr(baseline_col, df_pivot_val, f"Val_{score_name}")
-        plot_boxplot_percentage_impr(baseline_col, df_pivot_test, f"Test_{score_name}")
+        plot_boxplot_percentage_impr(baseline_col, df_pivot_val, f"Val_{score_name}", score_name)
+        plot_boxplot_percentage_impr(baseline_col, df_pivot_test, f"Test_{score_name}", score_name)
 
         # Without FE
         df_pivot_val_without_FE = df_pivot_val.copy()
@@ -573,13 +576,11 @@ def analysis():
         df_pivot_val_without_FE.drop(columns=["OpenFE", "MetaFE"], inplace=True, errors='ignore')
         df_pivot_test_without_FE.drop(columns=["OpenFE", "MetaFE"], inplace=True, errors='ignore')
 
-        plot_count_best(df_pivot_val_without_FE, df_pivot_test_without_FE, f"{score_name}_without_FE_")
-        plot_avg_percentage_impr(baseline_col, df_pivot_val_without_FE, df_pivot_val_std,
-                                 f"Val_{score_name}_without_FE")
-        plot_avg_percentage_impr(baseline_col, df_pivot_test_without_FE, df_pivot_test_std,
-                                 f"Test_{score_name}_without_FE")
-        plot_boxplot_percentage_impr(baseline_col, df_pivot_val_without_FE, f"Val_{score_name}_without_FE")
-        plot_boxplot_percentage_impr(baseline_col, df_pivot_test_without_FE, f"Test_{score_name}_without_FE")
+        plot_count_best(df_pivot_val_without_FE, df_pivot_test_without_FE, f"{score_name}_without_FE_", score_name)
+        plot_avg_percentage_impr(baseline_col, df_pivot_val_without_FE, df_pivot_val_std, f"Val_{score_name}_without_FE", score_name)
+        plot_avg_percentage_impr(baseline_col, df_pivot_test_without_FE, df_pivot_test_std, f"Test_{score_name}_without_FE", score_name)
+        plot_boxplot_percentage_impr(baseline_col, df_pivot_val_without_FE, f"Val_{score_name}_without_FE", score_name)
+        plot_boxplot_percentage_impr(baseline_col, df_pivot_test_without_FE, f"Test_{score_name}_without_FE", score_name)
 
 
 if __name__ == "__main__":
