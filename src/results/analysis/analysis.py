@@ -364,6 +364,7 @@ def plot_avg_percentage_impr(baseline_col, df_pivot, df_pivot_std, name, only_pa
 
 
 def plot_boxplot_percentage_impr(baseline_col, df_pivot, name):
+    np.random.seed(0)
     if "without_FE" in name:
         score_type = name.split("_")[0]
         if score_type == "Val":
