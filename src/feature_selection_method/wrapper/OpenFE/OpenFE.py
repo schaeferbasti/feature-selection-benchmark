@@ -16,11 +16,11 @@ def get_openFE_features(train_x, train_y, test_x, n_jobs, name) -> tuple[
     return train_x, test_x
 
 
-def main(dataset_id):
+def main(dataset_id, seed):
+    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id, seed)
     try:
         pd.read_parquet("data/wrapper/OpenFE_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
         X_train, X_test = get_openFE_features(X_train, y_train, X_test, 1, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/OpenFE_" + str(dataset_id) + ".parquet")  # ../../../
@@ -28,4 +28,5 @@ def main(dataset_id):
 
 if __name__ == "__main__":
     dataset_id = 146818
-    main(dataset_id)
+    seed = 1
+    main(dataset_id, seed)

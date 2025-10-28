@@ -21,11 +21,11 @@ def get_featurewiz_features(train_x, train_y, test_x) -> tuple[
     return train_x, test_x
 
 
-def main(dataset_id):
+def main(dataset_id, seed):
     try:
         pd.read_parquet("data/wrapper/Featurewiz_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id, seed)
         X_train, X_test = get_featurewiz_features(X_train, y_train, X_test)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/Featurewiz_" + str(dataset_id) + ".parquet")  # ../../../
@@ -33,4 +33,5 @@ def main(dataset_id):
 
 if __name__ == "__main__":
     dataset_id = 146820
-    main(dataset_id)
+    seed = 1
+    main(dataset_id, seed)

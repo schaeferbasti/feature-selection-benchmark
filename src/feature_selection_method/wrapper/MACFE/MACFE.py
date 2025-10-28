@@ -184,11 +184,11 @@ def _feature_construction_step(df, TRM_dataset, TRM_binary_dataset):
     return df_e
 
 
-def main(dataset_id):
+def main(dataset_id, seed):
     try:
         pd.read_parquet("data/wrapper/MACFE_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id, seed)
         X_train, X_test = get_macfe_features(X_train, y_train, X_test, y_test, dataset_id)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/MACFE_" + str(dataset_id) + ".parquet")  # ../../../
@@ -196,4 +196,5 @@ def main(dataset_id):
 
 if __name__ == "__main__":
     dataset_id = 146820
-    main(dataset_id)
+    seed = 1
+    main(dataset_id, seed)

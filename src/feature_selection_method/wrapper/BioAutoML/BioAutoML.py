@@ -125,11 +125,11 @@ def objective_rf(space, continuous):
     return {'loss': -metric, 'status': STATUS_OK}
 
 
-def main(dataset_id):
+def main(dataset_id, seed):
     try:
         pd.read_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../
     except FileNotFoundError:
-        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
+        X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id, seed)
         X_train, X_test = get_bioautoml_features(X_train, y_train, X_test, 50, True)
         data = concat_data(X_train, y_train, X_test, y_test, "target")
         data.to_parquet("data/wrapper/BioAutoML_" + str(dataset_id) + ".parquet")  # ../../../
@@ -137,4 +137,5 @@ def main(dataset_id):
 
 if __name__ == "__main__":
     dataset_id = 146818
-    main(dataset_id)
+    seed = 1
+    main(dataset_id, seed)

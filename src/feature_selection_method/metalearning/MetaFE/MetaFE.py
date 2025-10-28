@@ -146,9 +146,9 @@ def predict_improvement(result_matrix, comparison_result_matrix, X_train, y_trai
     return X, y
 
 
-def process_method(dataset_id, model, wanted_min_relative_improvement):
+def process_method(dataset_id, model, wanted_min_relative_improvement, seed):
     last_reset_time.value = time.time()
-    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id)
+    X_train, y_train, X_test, y_test, dataset_metadata = get_dataset_split(dataset_id, seed)
     try:
         pd.read_parquet("data/metalearning/MetaFE_" + str(dataset_id) + ".parquet")  # ../../
     except FileNotFoundError:
@@ -181,14 +181,14 @@ def run_with_resource_limits(target_func, mem_limit_mb, time_limit_sec, check_in
     return process.exitcode
 
 
-def main(dataset_id):
+def main(dataset_id, seed):
     last_reset_time = Value(ctypes.c_double, time.time())
     wanted_min_relative_improvement = 0.1
     memory_limit_mb = 64000
     time_limit_seconds = 1800
     print("MFE - Method: Pandas, Dataset: " + str(dataset_id) + ", Model: Recursive Surrogate Model using CatBoost using Pandas")
     model = "LightGBM_BAG_L1"
-    process_func = partial(process_method, dataset_id, model, wanted_min_relative_improvement)
+    process_func = partial(process_method, dataset_id, model, wanted_min_relative_improvement, seed)
     exit_code = run_with_resource_limits(process_func, mem_limit_mb=memory_limit_mb, time_limit_sec=time_limit_seconds)
     if exit_code != 0:
         print(f"[Warning] Method failed or was terminated. Skipping.\n")
@@ -197,4 +197,5 @@ def main(dataset_id):
 if __name__ == '__main__':
     last_reset_time = Value(ctypes.c_double, time.time())
     dataset_id = 146818
-    main(dataset_id)
+    seed = 1
+    main(dataset_id, seed)
