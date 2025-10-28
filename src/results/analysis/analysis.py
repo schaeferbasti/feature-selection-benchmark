@@ -208,8 +208,9 @@ def get_data(result_files):
     df_all["error_val"] = - df_all["score_val"]
     df_all["error_test"] = - df_all["score_test"]
     # Pivot to have datasets on x, methods on lines
+    df_all["instance"] = df_all.apply(lambda row: f"{row['dataset']}|{row['model']}|{row['score_name']}|{str(row['seed'])}", axis=1)
     df_all = df_all.drop_duplicates()
-    df_pivot_val = df_all.pivot(index="dataset", columns="origin", values="error_val")
+    df_pivot_val = df_all.pivot(index="instance", columns="origin", values="score_val")
     df_pivot_val = df_pivot_val.sort_index()  # Sort by dataset ID
     df_pivot_val = make_model_name_nice(df_pivot_val)
     """
@@ -217,7 +218,7 @@ def get_data(result_files):
     df_pivot_val_std = df_pivot_val_std.sort_index()  # Sort by dataset ID
     df_pivot_val_std = make_model_name_nice(df_pivot_val_std)
     """
-    df_pivot_test = df_all.pivot(index="dataset", columns="origin", values="error_test")
+    df_pivot_test = df_all.pivot(index="instance", columns="origin", values="score_test")
     df_pivot_test = df_pivot_test.sort_index()  # Sort by dataset ID
     df_pivot_test = make_model_name_nice(df_pivot_test)
     """
@@ -229,7 +230,7 @@ def get_data(result_files):
     dataset_list = []
     for dataset in datasets.tolist():
         task = openml.tasks.get_task(
-            int(dataset),
+            int(dataset.split('|')[0]),
             download_splits=True,
             download_data=True,
             download_qualities=True,
@@ -614,6 +615,7 @@ def analysis():
     plot_score_graph(dataset_list_wrapped, df_pivot_val_openfe, df_pivot_val_openfe_std, "Val_openfe_pandas")
     plot_score_graph(dataset_list_wrapped, df_pivot_test_openfe, df_pivot_test_openfe_std, "Test_openfe_pandas")
     """
+
 
 if __name__ == "__main__":
     analysis()
