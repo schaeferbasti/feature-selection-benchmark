@@ -382,7 +382,7 @@ def plot_count_best(df_pivot_val, df_pivot_test, name, score_name):
     plt.xticks(rotation=90, ha="right")
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(f"results/analysis/Count_Best_{name}_bar.png")
+    plt.savefig(f"results/analysis/Count_Best_{name}bar.png")
     plt.close()
 
 
