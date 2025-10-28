@@ -65,7 +65,7 @@ def separate_by_score_and_pivot(df_grouped):
 
         # Create instance identifier (dataset|model)
         df_score["instance"] = df_score.apply(
-            lambda row: f"{row['dataset']}|{row['model']}",
+            lambda row: f"{row['dataset']} - {row['model']}",
             axis=1
         )
 
@@ -93,7 +93,7 @@ def separate_by_score_and_pivot(df_grouped):
         datasets = df_pivot_val.index.astype(str)
         dataset_list = []
         for dataset in datasets.tolist():
-            parts = dataset.split('|')
+            parts = dataset.split(' - ')
             dataset_id = int(parts[0])
             model_name = parts[1]
 
