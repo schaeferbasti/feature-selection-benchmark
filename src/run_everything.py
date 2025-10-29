@@ -3,19 +3,19 @@ from src.run_benchmark import run_benchmark
 from src.run_methods import run_methods
 
 
-def run_everything(dataset_ids, models, classification_scores, regression_scores, folds):
+def run_everything(dataset_ids, models, classification_scores, regression_scores, n_repeat):
     # Run all Methods
     run_methods(dataset_ids)
     # Run Benchmark
-    run_benchmark(folds, models, classification_scores, regression_scores)
+    run_benchmark(n_repeat, models, classification_scores, regression_scores)
     # Run Result Analysis
     analysis()
 
 
 if __name__ == "__main__":
-    folds = 2
+    n_repeat = 2
     dataset_ids = [2, 146818, 146820, 167120, 167210, 168350, 168757, 168784, 189354]  # 2073, 190146, 233211, 359930, 359931, 359932, 359933, 359935, 359936, 359937, 359938, 359944, 359949, 359950, 359952, 359954, 359955, 359956, 359958, 359959, 359960, 359962, 359963, 359965, 359968, 359971, 359972, 359974, 359975, 359979, 359981, 359982, 359983, 359987, 359992, 359993]
     models = ["HistGradientBoosting", "RandomForest"]  # , "MLP", "SVM", "GaussianNB", "KNeighbors"]
     classification_scores = ["log_loss", "roc_auc_score"]
     regression_scores = ["root_mean_squared_error", "max_error"]
-    run_everything(dataset_ids, models, classification_scores, regression_scores, folds)
+    run_everything(dataset_ids, models, classification_scores, regression_scores, n_repeat)

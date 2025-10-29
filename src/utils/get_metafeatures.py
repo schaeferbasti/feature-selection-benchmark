@@ -8,8 +8,6 @@ import numpy as np
 import tensorflow as tf
 from tabpfn import TabPFNClassifier
 
-from src.utils.get_data import get_name_and_split_and_save_dataset
-
 
 def get_pymfe_metafeatures(feature):
     pymfe = MFE()

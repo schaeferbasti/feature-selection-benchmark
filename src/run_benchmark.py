@@ -10,9 +10,9 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 
-def run_benchmark(folds, models, classification_scores, regression_scores):
-    for fold in range(folds):
-        print("Fold: ", fold)
+def run_benchmark(n_repeat, models, classification_scores, regression_scores):
+    for repeat in range(n_repeat):
+        print("Repeat: ", repeat)
         target_label = 'target'
         result_files = glob.glob("data/*/*.parquet")
         result_files.sort()
@@ -29,9 +29,10 @@ def run_benchmark(folds, models, classification_scores, regression_scores):
             data = concat_data(X_train, y_train, X_test, y_test, "target")
             data.to_parquet(f"data/original/Original_{dataset_id}.parquet")
 
-            # === ORIGINAL RESULTS ===
             original_path = f"results/Original_{dataset_id}.parquet"
             for model in models:
+
+                # === ORIGINAL RESULTS ===
                 try:
                     original_results = pd.read_parquet(original_path)
                 except FileNotFoundError:
@@ -40,12 +41,11 @@ def run_benchmark(folds, models, classification_scores, regression_scores):
                     X_test_copy = X_test.copy()
                     y_test_copy = y_test.copy()
                     if task_type == "Supervised Classification":
-                        original_results = get_sklearn_model_score_classification(X_train_copy, y_train_copy, X_test_copy, y_test_copy, dataset_id, "Original", model, fold, classification_scores)
+                        original_results = get_sklearn_model_score_classification(X_train_copy, y_train_copy, X_test_copy, y_test_copy, dataset_id, "Original", model, repeat, classification_scores)
                     else:
-                        original_results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "Original", model, fold, regression_scores)
+                        original_results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "Original", model, repeat, regression_scores)
                     original_results = original_results[original_results['model'] == "LightGBM_BAG_L1"]
                     original_results.to_parquet(original_path)
-
                 combined_results = [original_results]
 
                 # === METHOD RESULTS ===
@@ -63,7 +63,7 @@ def run_benchmark(folds, models, classification_scores, regression_scores):
 
                     scores_to_check = classification_scores if task_type == 'Supervised Classification' else regression_scores
                     if existing_results is not None:
-                        mask_fold_model = (existing_results["seed"] == fold) & (existing_results["model"] == model)
+                        mask_fold_model = (existing_results["seed"] == repeat) & (existing_results["model"] == model)
                         if mask_fold_model.any():
                             # Fold+model exists: check for missing scores
                             existing_scores = set(existing_results.loc[mask_fold_model, "score_name"].unique())
@@ -79,11 +79,11 @@ def run_benchmark(folds, models, classification_scores, regression_scores):
                     if missing_scores:  # or existing_results is None:
                         try:
                             df = pd.read_parquet(data_file)
-                            Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label, fold)
+                            Xf_train, yf_train, Xf_test, yf_test = split_data(df, target_label, repeat)
                             if task_type == 'Supervised Classification':
-                                results = get_sklearn_model_score_classification(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name, model, fold, missing_scores)
+                                results = get_sklearn_model_score_classification(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name, model, repeat, missing_scores)
                             else:
-                                results = get_sklearn_model_score_regression(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name, model, fold, missing_scores)
+                                results = get_sklearn_model_score_regression(Xf_train, yf_train, Xf_test, yf_test, dataset_id, method_name, model, repeat, missing_scores)
 
                             # If existing results: concat and save; otherwise just save
                             if existing_results is not None:
@@ -97,7 +97,7 @@ def run_benchmark(folds, models, classification_scores, regression_scores):
                             print(f'No data file or KeyError: {e}')
                             continue
                     else:
-                        print(f"All scores present for {method_name}, fold {fold}, model {model}")
+                        print(f"All scores present for {method_name}, fold {repeat}, model {model}")
                     # Append results to combined_results (only once)
                     if existing_results is not None:
                         combined_results.append(existing_results)
