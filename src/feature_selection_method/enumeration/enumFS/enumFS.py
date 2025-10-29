@@ -23,15 +23,15 @@ def get_metric_direction(score_name):
         return "lower"
 
 
-def evaluate_subset(X_train, y_train, X_test, y_test, dataset_id, task_type, model_name, score_name, fold):
+def evaluate_subset(X_train, y_train, X_test, y_test, dataset_id, task_type, model_name, score_name, repeat):
     if task_type == "Supervised Classification":
-        results = get_sklearn_model_score_classification(X_train, y_train, X_test, y_test, dataset_id, "EnumerateFS", model_name, fold, score_name)
+        results = get_sklearn_model_score_classification(X_train, y_train, X_test, y_test, dataset_id, "EnumerateFS", model_name, repeat, score_name)
     else:
-        results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "EnumerateFS", model_name, fold, score_name)
+        results = get_sklearn_model_score_regression(X_train, y_train, X_test, y_test, dataset_id, "EnumerateFS", model_name, repeat, score_name)
     return results["score_test"].iloc[0]
 
 
-def enumerateFS(X_train, y_train, X_test, y_test, dataset_id, task_type, model_name, score_name, fold):
+def enumerateFS(X_train, y_train, X_test, y_test, dataset_id, task_type, model_name, score_name, repeat):
     n_features = X_train.shape[1]
     if n_features <= 10:
         direction = get_metric_direction(score_name)
@@ -50,7 +50,7 @@ def enumerateFS(X_train, y_train, X_test, y_test, dataset_id, task_type, model_n
                 print(feature_indices)
                 X_train_selection = X_train.iloc[:, feature_indices]
                 X_test_selection = X_test.iloc[:, feature_indices]
-                score = evaluate_subset(X_train_selection, y_train, X_test_selection, y_test, dataset_id, task_type, model_name, score_name, fold)
+                score = evaluate_subset(X_train_selection, y_train, X_test_selection, y_test, dataset_id, task_type, model_name, score_name, repeat)
                 selected_feature_names = [feature_names[i] for i in feature_indices]
                 if direction == "lower":
                     if score < best_score:
@@ -89,7 +89,7 @@ def iterate_models(X_test, X_train, dataset_id, model_names, score_name, seed, t
     for model_name in model_names:
         print(f"Enumeration Method, Model: {model_name}, Score: {score_name}, Seed: {seed}, Dataset: {dataset_id}")
         try:
-            data = pd.read_parquet(f"data/enumeration/enumFS_{dataset_id}_{model_name}_{score_name}_{seed}.parquet")  # ../../../
+            data = pd.read_parquet(f"data/enumeration/enumFS-{model_name}-{score_name}-{seed}_{dataset_id}.parquet")  # ../../../
             print("File exists" + str(data.head()) + "\n\n")
         except FileNotFoundError:
             print("Calculate Feature Selection")
@@ -100,7 +100,7 @@ def iterate_models(X_test, X_train, dataset_id, model_names, score_name, seed, t
                 X_train_new = pd.DataFrame(X_train, columns=selected_features, index=X_train.index)
                 X_test_new = pd.DataFrame(X_test, columns=selected_features, index=X_test.index)
                 data = concat_data(X_train_new, y_train, X_test_new, y_test, "target")
-                data.to_parquet(f"data/enumeration/enumFS_{dataset_id}_{model_name}_{score_name}_{seed}.parquet")  # ../../../
+                data.to_parquet(f"data/enumeration/enumFS-{model_name}-{score_name}-{seed}_{dataset_id}.parquet")  # ../../../
                 print("File created" + str(data.head()) + "\n\n")
 
 
